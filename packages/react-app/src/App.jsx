@@ -23,18 +23,15 @@ import {
   useOnBlock,
   useUserProviderAndSigner,
 } from "eth-hooks";
-import {
-  useEventListener,
-} from "eth-hooks/events/useEventListener";
-import {
-  useExchangeEthPrice,
-} from "eth-hooks/dapps/dex";
+import { useEventListener } from "eth-hooks/events/useEventListener";
+import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
 // import Hints from "./Hints";
 
-import { useContractConfig } from "./hooks"
+import { useContractConfig } from "./hooks";
 import Portis from "@portis/web3";
 import Fortmatic from "fortmatic";
 import Authereum from "authereum";
+import EthCrypto from "eth-crypto";
 
 const { ethers } = require("ethers");
 
@@ -43,6 +40,8 @@ const { BufferList } = require("bl");
 const ipfsAPI = require("ipfs-http-client");
 
 const ipfs = ipfsAPI({ host: "ipfs.infura.io", port: "5001", protocol: "https" });
+const pubKey =
+  "01e32ab579d8a368f879b67a8487bd65093dc6c750a2418c169a146579486f68e08965eab5b00d7dc7349a1374bd9866c895f8997ffdb1d667d143bc555b7854";
 
 console.log("📦 Assets: ", assets);
 /*
@@ -114,7 +113,11 @@ if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
 const scaffoldEthProvider = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://rpc.scaffoldeth.io:48544")
   : null;
-const poktMainnetProvider = navigator.onLine ? new ethers.providers.StaticJsonRpcProvider("https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406") : null;
+const poktMainnetProvider = navigator.onLine
+  ? new ethers.providers.StaticJsonRpcProvider(
+      "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
+    )
+  : null;
 const mainnetInfura = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID)
   : null;
@@ -158,7 +161,6 @@ const web3Modal = new Web3Modal({
           100: "https://dai.poa.network", // xDai
         },
       },
-
     },
     portis: {
       display: {
@@ -464,8 +466,6 @@ function App(props) {
     );
   }
 
-
-
   const loadWeb3Modal = useCallback(async () => {
     const provider = await web3Modal.connect();
     setInjectedProvider(new ethers.providers.Web3Provider(provider));
@@ -539,6 +539,36 @@ function App(props) {
   const [transferToAddresses, setTransferToAddresses] = useState({});
 
   const [loadedAssets, setLoadedAssets] = useState();
+  const [email, setEmail] = useState("patcito@gmail.com");
+  const [name, setName] = useState("Patrick Aljord");
+  const [twitter, setTwitter] = useState("patcito");
+  const [bio, setBio] = useState("i code");
+  const [job, setJob] = useState("yearn coder");
+  const [company, setCompany] = useState("Yearn");
+  const [diet, setDiet] = useState("vegetarian");
+  const [tshirt, setTshirt] = useState("M");
+  const [ticketCode, setTicketCode] = useState("random");
+
+  useEffect(async () => {
+    const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
+    const encryptedName = await EthCrypto.encryptWithPublicKey(pubKey, name);
+    const encryptedTwitter = await EthCrypto.encryptWithPublicKey(pubKey, twitter);
+    const encryptedBio = await EthCrypto.encryptWithPublicKey(pubKey, bio);
+    const encryptedJob = await EthCrypto.encryptWithPublicKey(pubKey, job);
+    const encryptedCompany = await EthCrypto.encryptWithPublicKey(pubKey, company);
+    const encryptedDiet = await EthCrypto.encryptWithPublicKey(pubKey, diet);
+    const encryptedTshirt = await EthCrypto.encryptWithPublicKey(pubKey, tshirt);
+    const encryptedTicketCode = await EthCrypto.encryptWithPublicKey(pubKey, ticketCode);
+    setEmail(EthCrypto.cipher.stringify(encryptedEmail));
+    setName(EthCrypto.cipher.stringify(encryptedName));
+    setTwitter(EthCrypto.cipher.stringify(encryptedTwitter));
+    setBio(EthCrypto.cipher.stringify(encryptedBio));
+    setJob(EthCrypto.cipher.stringify(encryptedJob));
+    setCompany(EthCrypto.cipher.stringify(encryptedCompany));
+    setDiet(EthCrypto.cipher.stringify(encryptedDiet));
+    setTshirt(EthCrypto.cipher.stringify(encryptedTshirt));
+    setTicketCode(EthCrypto.cipher.stringify(encryptedTicketCode));
+  }, []);
   useEffect(() => {
     const updateYourCollectibles = async () => {
       const assetUpdate = [];
@@ -571,7 +601,31 @@ function App(props) {
           <Button
             onClick={() => {
               console.log("gasPrice,", gasPrice);
-              tx(writeContracts.YourCollectible.mintItem(loadedAssets[a].id, { gasPrice }));
+              /*string memory email,
+        string memory name,
+        string memory twitter,
+        string memory bio,
+        string memory job,
+        string memory company,
+        string memory diet,
+        string memory tshirt*/
+              console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt);
+              tx(
+                writeContracts.YourCollectible.mintItem(
+                  loadedAssets[a].id,
+                  email,
+                  name,
+                  twitter,
+                  bio,
+                  job,
+                  company,
+                  diet,
+                  tshirt,
+                  ticketCode,
+                  { isResellable: true, price: "150000000000000000" },
+                  { gasPrice, value: "100000000000000000" },
+                ),
+              );
             }}
           >
             Mint
