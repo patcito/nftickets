@@ -33,22 +33,27 @@ contract YourCollectible is ERC721 {
         bool isResellable;
         uint256 price;
     }
+
+    struct AttendeeInfo {
+        string email;
+        string name;
+        string twitter;
+        string bio;
+        string job;
+        string company;
+        string diet;
+        string tshirt;
+    }
     //this marks an item in IPFS as "forsale"
     mapping(bytes32 => bool) public forSale;
     //this lets you look up a token by the uri (assuming there is only one of each uri for now)
     mapping(bytes32 => uint256) public uriToTokenId;
-    mapping(uint256 => string) public _idToEmail;
-    mapping(uint256 => string) public _idToName;
-    mapping(uint256 => string) public _idToTwitter;
-    mapping(uint256 => string) public _idToBio;
-    mapping(uint256 => string) public _idToJob;
-    mapping(uint256 => string) public _idToCompany;
-    mapping(uint256 => string) public _idToDiet;
-    mapping(uint256 => string) public _idToTshirt;
+    mapping(uint256 => AttendeeInfo) public _idToAttendeeInfo;
     mapping(uint256 => string) public _idToTicketCode;
     mapping(uint256 => Resellable) public _idToTicketResellable;
     mapping(uint256 => bool) public _idToScanned;
     mapping(uint256 => bool) public _idToCanceled;
+    mapping(uint256 => bool) public _idToIncludeWorkshops;
 
     function markAsScanned(uint256 id, bool scanned) public returns (bool) {
         require(msg.sender == owner, "only owner can mark as scanned");
@@ -73,6 +78,18 @@ contract YourCollectible is ERC721 {
         );
         Resellable memory resellable = Resellable(isResellable, price);
         _idToTicketResellable[id] = resellable;
+        return true;
+    }
+
+    function updateAttendeeInfo(uint256 id, AttendeeInfo memory attendeeInfo)
+        public
+        returns (bool)
+    {
+        require(
+            msg.sender == owner || msg.sender == this.ownerOf(id),
+            "only contract owner or ticket owner can reset resell status"
+        );
+        _idToAttendeeInfo[id] = attendeeInfo;
         return true;
     }
 
@@ -101,22 +118,20 @@ contract YourCollectible is ERC721 {
 
     function mintItem(
         string memory tokenURI,
-        string memory email,
-        string memory name,
-        string memory twitter,
-        string memory bio,
-        string memory job,
-        string memory company,
-        string memory diet,
-        string memory tshirt,
+        AttendeeInfo memory attendeeInfo,
         string memory ticketCode,
-        Resellable memory resellable
+        Resellable memory resellable,
+        bool includeWorkshops
     ) public payable returns (uint256) {
         console.log("mm %s", msg.value);
-        console.log("email %s", email);
-        console.log("name %s", name);
-        console.log("twitter %s", twitter);
+        console.log("email %s", attendeeInfo.email);
         require(msg.value >= 10**17, "Not enough ETH sent; check price!");
+        if (includeWorkshops) {
+            require(
+                msg.value >= 2 * 10**17,
+                "Not enough ETH sent; check price!"
+            );
+        }
         bytes32 uriHash = keccak256(abi.encodePacked(tokenURI));
         //console.log("urihash", uriHash);
         console.log("tokenURI %s", tokenURI);
@@ -132,19 +147,11 @@ contract YourCollectible is ERC721 {
         _setTokenURI(id, tokenURI);
 
         uriToTokenId[uriHash] = id;
-        _idToEmail[id] = email;
-        _idToName[id] = name;
-        _idToTwitter[id] = twitter;
-        _idToBio[id] = bio;
-        _idToJob[id] = job;
-        _idToCompany[id] = company;
-        _idToDiet[id] = diet;
-        _idToTshirt[id] = tshirt;
+        _idToAttendeeInfo[id] = attendeeInfo;
         _idToTicketCode[id] = ticketCode;
         _idToTicketResellable[id] = resellable;
         _idToScanned[id] = false;
         _idToCanceled[id] = false;
-        console.log(_idToEmail[id]);
         console.log(uriToTokenId[uriHash]);
         return id;
     }

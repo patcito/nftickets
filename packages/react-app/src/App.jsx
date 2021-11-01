@@ -548,6 +548,7 @@ function App(props) {
   const [diet, setDiet] = useState("vegetarian");
   const [tshirt, setTshirt] = useState("M");
   const [ticketCode, setTicketCode] = useState("random");
+  const [includeWorkshops, setIncludeWorkshops] = useState(true);
 
   useEffect(async () => {
     const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
@@ -568,6 +569,10 @@ function App(props) {
     setDiet(EthCrypto.cipher.stringify(encryptedDiet));
     setTshirt(EthCrypto.cipher.stringify(encryptedTshirt));
     setTicketCode(EthCrypto.cipher.stringify(encryptedTicketCode));
+    //to decrypt:
+    //dd=EthCrypto.cipher.parse(email)
+    //m=EthCrypto.decryptWithPrivateKey("<private key>", dd)
+    //m.then((email)=>{console.log(email)})
   }, []);
   useEffect(() => {
     const updateYourCollectibles = async () => {
@@ -609,21 +614,15 @@ function App(props) {
         string memory company,
         string memory diet,
         string memory tshirt*/
-              console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt);
+              console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt, includeWorkshops);
               tx(
                 writeContracts.YourCollectible.mintItem(
                   loadedAssets[a].id,
-                  email,
-                  name,
-                  twitter,
-                  bio,
-                  job,
-                  company,
-                  diet,
-                  tshirt,
+                  { email, name, twitter, bio, job, company, diet, tshirt },
                   ticketCode,
                   { isResellable: true, price: "150000000000000000" },
-                  { gasPrice, value: "100000000000000000" },
+                  includeWorkshops,
+                  { gasPrice, value: "200000000000000000" },
                 ),
               );
             }}
