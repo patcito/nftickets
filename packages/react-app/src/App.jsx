@@ -548,7 +548,7 @@ function App(props) {
   const [diet, setDiet] = useState("vegetarian");
   const [tshirt, setTshirt] = useState("M");
   const [ticketCode, setTicketCode] = useState("random");
-  const [includeWorkshops, setIncludeWorkshops] = useState(true);
+  const [includeWorkshops, setIncludeWorkshops] = useState(false);
 
   useEffect(async () => {
     const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
@@ -615,6 +615,7 @@ function App(props) {
         string memory diet,
         string memory tshirt*/
               console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt, includeWorkshops);
+              console.log("lololo", loadedAssets[a].id);
               tx(
                 writeContracts.YourCollectible.mintItem(
                   loadedAssets[a].id,
@@ -622,7 +623,7 @@ function App(props) {
                   ticketCode,
                   { isResellable: true, price: "150000000000000000" },
                   includeWorkshops,
-                  { gasPrice, value: "200000000000000000" },
+                  { gasPrice, value: "100000000000000000" },
                 ),
               );
             }}

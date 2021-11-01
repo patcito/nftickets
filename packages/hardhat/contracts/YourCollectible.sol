@@ -14,6 +14,8 @@ contract YourCollectible is ERC721 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     address payable public owner;
+    uint256 public conferencePrice;
+    uint256 public workshopConferencePrice;
 
     //uint256 public price;
 
@@ -22,9 +24,11 @@ contract YourCollectible is ERC721 {
         ERC721("YourCollectible", "YCB")
     {
         owner = payable(msg.sender);
-        //price = 10**17;
+        conferencePrice = 10**17;
+        workshopConferencePrice = 2 * 10**17;
         _setBaseURI("https://ipfs.io/ipfs/");
-        for (uint256 i = 0; i < assetsForSale.length; i++) {
+        //for (uint256 i = 0; i < assetsForSale.length; i++) {
+        for (uint256 i = 0; i < 4; i++) {
             forSale[assetsForSale[i]] = true;
         }
     }
@@ -65,6 +69,16 @@ contract YourCollectible is ERC721 {
         require(msg.sender == owner, "only owner can cancel ticket");
         _idToCanceled[id] = canceled;
         return canceled;
+    }
+
+    function setPrice(uint256 confPrice, uint256 wsConfPrice)
+        public
+        returns (bool)
+    {
+        require(msg.sender == owner, "only owner can cancel ticket");
+        conferencePrice = confPrice;
+        workshopConferencePrice = wsConfPrice;
+        return true;
     }
 
     function setResellable(
@@ -116,6 +130,12 @@ contract YourCollectible is ERC721 {
         _transfer(from, to, tokenId);
     }
 
+    function _setForSale(string memory tokenURI, bool newForSale) public {
+        require(msg.sender == owner, "only owner can cancel ticket");
+        bytes32 uriHash = keccak256(abi.encodePacked(tokenURI));
+        forSale[uriHash] = newForSale;
+    }
+
     function mintItem(
         string memory tokenURI,
         AttendeeInfo memory attendeeInfo,
@@ -125,10 +145,13 @@ contract YourCollectible is ERC721 {
     ) public payable returns (uint256) {
         console.log("mm %s", msg.value);
         console.log("email %s", attendeeInfo.email);
-        require(msg.value >= 10**17, "Not enough ETH sent; check price!");
+        require(
+            msg.value >= conferencePrice,
+            "Not enough ETH sent; check price!"
+        );
         if (includeWorkshops) {
             require(
-                msg.value >= 2 * 10**17,
+                msg.value >= workshopConferencePrice,
                 "Not enough ETH sent; check price!"
             );
         }
