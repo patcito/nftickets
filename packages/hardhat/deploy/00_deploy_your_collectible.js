@@ -21,7 +21,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   }
   console.log(" \n");
 
-  await deploy("YourCollectible", {
+  await deploy("ETHDubaiTicket", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     args: [bytes32Array],
@@ -62,7 +62,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
   */
 };
-module.exports.tags = ["YourCollectible"];
+module.exports.tags = ["ETHDubaiTicket"];
 
 /*
 Tenderly verification

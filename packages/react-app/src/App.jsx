@@ -293,28 +293,28 @@ function App(props) {
   ]);
 
   // keep track of a variable from the contract in the local React state:
-  const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
+  const balance = useContractReader(readContracts, "ETHDubaiTicket", "balanceOf", [address]);
   console.log("🤗 balance:", balance);
 
   // 📟 Listen for broadcast events
-  const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
+  const transferEvents = useEventListener(readContracts, "ETHDubaiTicket", "Transfer", localProvider, 1);
   console.log("📟 Transfer events:", transferEvents);
 
   //
-  // 🧠 This effect will update yourCollectibles by polling when your balance changes
+  // 🧠 This effect will update ETHDubaiTickets by polling when your balance changes
   //
   const yourBalance = balance && balance.toNumber && balance.toNumber();
-  const [yourCollectibles, setYourCollectibles] = useState();
+  const [ETHDubaiTickets, setETHDubaiTickets] = useState();
 
   useEffect(() => {
-    const updateYourCollectibles = async () => {
+    const updateETHDubaiTickets = async () => {
       const collectibleUpdate = [];
       for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
         try {
           console.log("GEtting token index", tokenIndex);
-          const tokenId = await readContracts.YourCollectible.tokenOfOwnerByIndex(address, tokenIndex);
+          const tokenId = await readContracts.ETHDubaiTicket.tokenOfOwnerByIndex(address, tokenIndex);
           console.log("tokenId", tokenId);
-          const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
+          const tokenURI = await readContracts.ETHDubaiTicket.tokenURI(tokenId);
           console.log("tokenURI", tokenURI);
 
           const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
@@ -333,9 +333,9 @@ function App(props) {
           console.log(e);
         }
       }
-      setYourCollectibles(collectibleUpdate);
+      setETHDubaiTickets(collectibleUpdate);
     };
-    updateYourCollectibles();
+    updateETHDubaiTickets();
   }, [address, yourBalance]);
 
   /*
@@ -549,6 +549,7 @@ function App(props) {
   const [tshirt, setTshirt] = useState("M");
   const [ticketCode, setTicketCode] = useState("random");
   const [includeWorkshops, setIncludeWorkshops] = useState(false);
+  const [includeWorkshopsAndPreParty, setIncludeWorkshopsAndPreParty] = useState(false);
 
   useEffect(async () => {
     const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
@@ -575,15 +576,15 @@ function App(props) {
     //m.then((email)=>{console.log(email)})
   }, []);
   useEffect(() => {
-    const updateYourCollectibles = async () => {
+    const updateETHDubaiTickets = async () => {
       const assetUpdate = [];
       for (const a in assets) {
         try {
-          const forSale = await readContracts.YourCollectible.forSale(ethers.utils.id(a));
+          const forSale = await readContracts.ETHDubaiTicket.forSale(ethers.utils.id(a));
           let owner;
           if (!forSale) {
-            const tokenId = await readContracts.YourCollectible.uriToTokenId(ethers.utils.id(a));
-            owner = await readContracts.YourCollectible.ownerOf(tokenId);
+            const tokenId = await readContracts.ETHDubaiTicket.uriToTokenId(ethers.utils.id(a));
+            owner = await readContracts.ETHDubaiTicket.ownerOf(tokenId);
           }
           assetUpdate.push({ id: a, ...assets[a], forSale, owner });
         } catch (e) {
@@ -592,7 +593,7 @@ function App(props) {
       }
       setLoadedAssets(assetUpdate);
     };
-    if (readContracts && readContracts.YourCollectible) updateYourCollectibles();
+    if (readContracts && readContracts.ETHDubaiTicket) updateETHDubaiTickets();
   }, [assets, readContracts, transferEvents]);
 
   const galleryList = [];
@@ -617,13 +618,14 @@ function App(props) {
               console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt, includeWorkshops);
               console.log("lololo", loadedAssets[a].id);
               tx(
-                writeContracts.YourCollectible.mintItem(
+                writeContracts.ETHDubaiTicket.mintItem(
                   loadedAssets[a].id,
                   { email, name, twitter, bio, job, company, diet, tshirt },
                   ticketCode,
                   { isResellable: true, price: "150000000000000000" },
                   includeWorkshops,
-                  { gasPrice, value: "100000000000000000" },
+                  includeWorkshopsAndPreParty,
+                  { gasPrice, value: "20000000000000000" },
                 ),
               );
             }}
@@ -689,14 +691,14 @@ function App(props) {
               Gallery
             </Link>
           </Menu.Item>
-          <Menu.Item key="/yourcollectibles">
+          <Menu.Item key="/ETHDubaiTickets">
             <Link
               onClick={() => {
-                setRoute("/yourcollectibles");
+                setRoute("/ETHDubaiTickets");
               }}
-              to="/yourcollectibles"
+              to="/ETHDubaiTickets"
             >
-              YourCollectibles
+              ETHDubaiTickets
             </Link>
           </Menu.Item>
           <Menu.Item key="/transfers">
@@ -756,11 +758,11 @@ function App(props) {
             </div>
           </Route>
 
-          <Route path="/yourcollectibles">
+          <Route path="/ETHDubaiTickets">
             <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
               <List
                 bordered
-                dataSource={yourCollectibles}
+                dataSource={ETHDubaiTickets}
                 renderItem={item => {
                   const id = item.id.toNumber();
                   return (
@@ -799,7 +801,7 @@ function App(props) {
                         <Button
                           onClick={() => {
                             console.log("writeContracts", writeContracts);
-                            tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
+                            tx(writeContracts.ETHDubaiTicket.transferFrom(address, transferToAddresses[id], id));
                           }}
                         >
                           Transfer
@@ -906,7 +908,7 @@ function App(props) {
           </Route>
           <Route path="/debugcontracts">
             <Contract
-              name="YourCollectible"
+              name="ETHDubaiTicket"
               signer={userSigner}
               provider={localProvider}
               address={address}
