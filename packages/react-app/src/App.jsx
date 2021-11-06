@@ -550,7 +550,7 @@ function App(props) {
   const [ticketCode, setTicketCode] = useState("random");
   const [includeWorkshops, setIncludeWorkshops] = useState(false);
   const [includeWorkshopsAndPreParty, setIncludeWorkshopsAndPreParty] = useState(false);
-
+  const [includeHotelExtra, setIncludeHotelExtra] = useState(true);
   useEffect(async () => {
     const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
     const encryptedName = await EthCrypto.encryptWithPublicKey(pubKey, name);
@@ -625,7 +625,8 @@ function App(props) {
                   { isResellable: true, price: "150000000000000000" },
                   includeWorkshops,
                   includeWorkshopsAndPreParty,
-                  { gasPrice, value: "20000000000000000" },
+                  includeHotelExtra,
+                  { gasPrice, value: "300000000000000000" },
                 ),
               );
             }}

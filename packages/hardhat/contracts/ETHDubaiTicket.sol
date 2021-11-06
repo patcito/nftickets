@@ -19,7 +19,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
     TicketSettings public ticketSettings;
     mapping(address => Discount) public discounts;
     string private _baseURIextended;
-    uint256 public withHotelExtra;
 
     event Log(address indexed sender, string message);
     event LogUint(uint256 indexed tokenId, string message);
@@ -47,18 +46,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
     event LogResell(ResellLog indexed resellLog, string message);
 
     constructor(bytes32[] memory assetsForSale)
-        public
         ERC721("ETHDubaiTicket", "ETHDUBAI")
     {
         emit Log(msg.sender, "Contract created");
         owner = payable(msg.sender);
         setBaseURI("https://ipfs.io/ipfs/");
-        withHotelExtra = 300;
         ticketSettings = TicketSettings(
             "early bird",
-            10**17,
-            2 * 10**18,
-            2 * 10**17
+            0.1 ether,
+            2 ether,
+            0.2 ether,
+            0.1 ether
         );
         //for (uint256 i = 0; i < assetsForSale.length; i++) {
         for (uint256 i = 0; i < 4; i++) {
@@ -83,6 +81,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         uint256 priceOneDay;
         uint256 priceTwoDays;
         uint256 priceThreeDays;
+        uint256 priceHotel;
     }
 
     struct AttendeeInfo {
@@ -167,13 +166,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string memory name,
         uint256 pOneDay,
         uint256 pTwoDays,
-        uint256 pThreeDays
+        uint256 pThreeDays,
+        uint256 pHotel
     ) public returns (bool) {
-        require(msg.sender == owner, "only owner can cancel ticket");
+        require(msg.sender == owner, "only owner can set ticket settings");
         ticketSettings.name = name;
         ticketSettings.priceOneDay = pOneDay;
         ticketSettings.priceTwoDays = pTwoDays;
         ticketSettings.priceThreeDays = pThreeDays;
+        ticketSettings.priceHotel = pHotel;
         emit LogTicketSettings(ticketSettings, "setTicketSettings");
         return true;
     }
@@ -243,6 +244,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
         }
     }
 
+    function getPrice() public {}
+
     function mintItem(
         string memory tokenURI,
         AttendeeInfo memory attendeeInfo,
@@ -252,8 +255,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bool includeWorkshopsAndPreParty,
         bool includeHotelExtra
     ) public payable returns (uint256) {
+        console.log(1111);
+        require(
+            !(includeWorkshops && includeWorkshopsAndPreParty),
+            "Can't include both workshops and workshops and pre party!"
+        );
+        console.log(22222);
         console.log("mm %s", msg.value);
         console.log("email %s", attendeeInfo.email);
+        console.log(33333);
         Discount memory discount = discounts[msg.sender];
         uint256 amount = discounts[msg.sender].amount;
         uint256 hotelAmount = 0;
@@ -263,13 +273,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 confPrice =
                     ticketSettings.priceOneDay -
                     ((ticketSettings.priceOneDay * amount) / 100);
-                if (includeHotelExtra) {
-                    hotelAmount = 2 * withHotelExtra;
-                }
             }
-
+            if (includeHotelExtra) {
+                hotelAmount = 2 * ticketSettings.priceHotel;
+            }
             require(
-                msg.value >= confPrice,
+                msg.value >= confPrice + hotelAmount,
                 "Not enough ETH sent; check price!"
             );
             if (includeWorkshops) {
@@ -278,12 +287,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
                     twoDayPrice =
                         ticketSettings.priceTwoDays -
                         ((ticketSettings.priceTwoDays * amount) / 100);
-                    if (includeHotelExtra) {
-                        hotelAmount = 3 * withHotelExtra;
-                    }
+                }
+                if (includeHotelExtra) {
+                    hotelAmount = 3 * ticketSettings.priceHotel;
                 }
                 require(
-                    msg.value >= twoDayPrice,
+                    msg.value >= twoDayPrice + hotelAmount,
                     "Not enough ETH sent; check price!"
                 );
             }
@@ -295,42 +304,42 @@ contract ETHDubaiTicket is ERC721URIStorage {
                         ((ticketSettings.priceThreeDays * amount) / 100);
                 }
                 if (includeHotelExtra) {
-                    hotelAmount = 4 * withHotelExtra;
+                    hotelAmount = 4 * ticketSettings.priceHotel;
                 }
                 require(
-                    msg.value >= threeDayPrice,
+                    msg.value >= threeDayPrice + hotelAmount,
                     "Not enough ETH sent; check price!"
                 );
             }
         } else {
             amount = ticketSettings.priceOneDay;
+            if (includeHotelExtra) {
+                hotelAmount = 2 * ticketSettings.priceHotel;
+            }
             require(
-                msg.value >= ticketSettings.priceOneDay,
+                msg.value >= ticketSettings.priceOneDay + hotelAmount,
                 "Not enough ETH sent; check price!"
             );
-            if (includeHotelExtra) {
-                hotelAmount = 2 * withHotelExtra;
-            }
 
             if (includeWorkshops) {
+                if (includeHotelExtra) {
+                    hotelAmount = 3 * ticketSettings.priceHotel;
+                }
                 amount = ticketSettings.priceTwoDays;
                 require(
-                    msg.value >= ticketSettings.priceTwoDays,
+                    msg.value >= ticketSettings.priceTwoDays + hotelAmount,
                     "Not enough ETH sent; check price!"
                 );
-                if (includeHotelExtra) {
-                    hotelAmount = 3 * withHotelExtra;
-                }
             }
             if (includeWorkshopsAndPreParty) {
                 amount = ticketSettings.priceThreeDays;
+                if (includeHotelExtra) {
+                    hotelAmount = 4 * ticketSettings.priceHotel;
+                }
                 require(
-                    msg.value >= ticketSettings.priceThreeDays,
+                    msg.value >= ticketSettings.priceThreeDays + hotelAmount,
                     "Not enough ETH sent; check price!"
                 );
-                if (includeHotelExtra) {
-                    hotelAmount = 4 * withHotelExtra;
-                }
             }
         }
         bytes32 uriHash = keccak256(abi.encodePacked(tokenURI));
