@@ -2,6 +2,7 @@ const { ethers } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const fs = require("fs");
+const { generatePrimeSync } = require("crypto");
 
 use(solidity);
 
@@ -50,9 +51,103 @@ describe("My Dapp", function () {
         expect(ticketSettings.priceThreeDays.toString()).to.equal(
           "200000000000000000"
         );
+        expect(ticketSettings.priceHotel.toString()).to.equal(
+          "100000000000000000"
+        );
       });
     });
 
+    describe("getPrice() 3 days with hotel", function () {
+      it("Should return price with with discount", async function () {
+        let includeWorkshops = false;
+        let includeWorkshopsAndPreParty = true;
+        let includeHotelExtra = false;
+        const [owner, nonOwner] = await ethers.getSigners();
+        const getTotal = async () => {
+          return await myContract
+            .connect(nonOwner)
+            .getPrice(
+              nonOwner.address,
+              includeWorkshops,
+              includeWorkshopsAndPreParty,
+              includeHotelExtra
+            );
+        };
+        const total = await getTotal();
+        expect(total.toString()).to.equal(
+          ethers.utils.parseEther("0.2").toString()
+        );
+      });
+    });
+
+    describe("getPrice() 3 days without Hotel", function () {
+      it("Should return price with with discount", async function () {
+        let includeWorkshops = false;
+        let includeWorkshopsAndPreParty = true;
+        let includeHotelExtra = true;
+        const [owner, nonOwner] = await ethers.getSigners();
+        const getTotal = async () => {
+          return await myContract
+            .connect(nonOwner)
+            .getPrice(
+              nonOwner.address,
+              includeWorkshops,
+              includeWorkshopsAndPreParty,
+              includeHotelExtra
+            );
+        };
+        const total = await getTotal();
+        expect(total.toString()).to.equal(
+          ethers.utils.parseEther("0.6").toString()
+        );
+      });
+    });
+
+    describe("getPrice() 1 without Hotel", function () {
+      it("Should return price with with discount", async function () {
+        let includeWorkshops = false;
+        let includeWorkshopsAndPreParty = false;
+        let includeHotelExtra = false;
+        const [owner, nonOwner] = await ethers.getSigners();
+        const getTotal = async () => {
+          return await myContract
+            .connect(nonOwner)
+            .getPrice(
+              nonOwner.address,
+              includeWorkshops,
+              includeWorkshopsAndPreParty,
+              includeHotelExtra
+            );
+        };
+        const total = await getTotal();
+        expect(total.toString()).to.equal(
+          ethers.utils.parseEther("0.1").toString()
+        );
+      });
+    });
+
+    describe("getPrice() 1 with Hotel", function () {
+      it("Should return price with with discount", async function () {
+        let includeWorkshops = false;
+        let includeWorkshopsAndPreParty = false;
+        let includeHotelExtra = true;
+        const [owner, nonOwner] = await ethers.getSigners();
+        const getTotal = async () => {
+          return await myContract
+            .connect(nonOwner)
+            .getPrice(
+              nonOwner.address,
+              includeWorkshops,
+              includeWorkshopsAndPreParty,
+              includeHotelExtra
+            );
+        };
+        const total = await getTotal();
+        expect(total.toString()).to.equal(
+          ethers.utils.parseEther("0.3").toString()
+        );
+      });
+    });
     describe("setTicketSettings()", function () {
       it("Should be able to set ticket settings", async function () {
         let name = "late bird";
@@ -236,6 +331,29 @@ describe("My Dapp", function () {
               includeHotelExtra,
               { value: ethers.utils.parseEther("2.3").toHexString() }
             );
+        });
+      });
+
+      describe("getPrice() with discount", function () {
+        it("Should return price with with discount", async function () {
+          let includeWorkshops = false;
+          let includeWorkshopsAndPreParty = true;
+          let includeHotelExtra = true;
+          const [owner, nonOwner] = await ethers.getSigners();
+          const getTotal = async () => {
+            return await myContract
+              .connect(nonOwner)
+              .getPrice(
+                nonOwner.address,
+                includeWorkshops,
+                includeWorkshopsAndPreParty,
+                includeHotelExtra
+              );
+          };
+          const total = await getTotal();
+          expect(total.toString()).to.equal(
+            ethers.utils.parseEther("2.3").toString()
+          );
         });
       });
     });

@@ -244,7 +244,82 @@ contract ETHDubaiTicket is ERC721URIStorage {
         }
     }
 
-    function getPrice() public {}
+    function getPrice(
+        address sender,
+        bool includeWorkshops,
+        bool includeWorkshopsAndPreParty,
+        bool includeHotelExtra
+    ) public view returns (uint256) {
+        Discount memory discount = discounts[sender];
+        uint256 amount = discounts[sender].amount;
+        uint256 hotelAmount = 0;
+        uint256 total = 0;
+        if (amount > 0) {
+            uint256 confPrice = ticketSettings.priceOneDay;
+            if (discount.includeConf) {
+                confPrice =
+                    ticketSettings.priceOneDay -
+                    ((ticketSettings.priceOneDay * amount) / 100);
+            }
+            if (includeHotelExtra) {
+                hotelAmount = 2 * ticketSettings.priceHotel;
+            }
+
+            total = confPrice + hotelAmount;
+            if (includeWorkshops) {
+                uint256 twoDayPrice = ticketSettings.priceTwoDays;
+                if (discount.includeWorkshops) {
+                    twoDayPrice =
+                        ticketSettings.priceTwoDays -
+                        ((ticketSettings.priceTwoDays * amount) / 100);
+                }
+                if (includeHotelExtra) {
+                    hotelAmount = 3 * ticketSettings.priceHotel;
+                }
+
+                total = twoDayPrice + hotelAmount;
+            }
+            if (includeWorkshopsAndPreParty) {
+                uint256 threeDayPrice = ticketSettings.priceThreeDays;
+                if (discount.includeWorkshopsAndPreParty) {
+                    threeDayPrice =
+                        ticketSettings.priceThreeDays -
+                        ((ticketSettings.priceThreeDays * amount) / 100);
+                }
+                if (includeHotelExtra) {
+                    hotelAmount = 4 * ticketSettings.priceHotel;
+                }
+
+                total = threeDayPrice + hotelAmount;
+            }
+        } else {
+            amount = ticketSettings.priceOneDay;
+            if (includeHotelExtra) {
+                hotelAmount = 2 * ticketSettings.priceHotel;
+            }
+
+            total = ticketSettings.priceOneDay + hotelAmount;
+
+            if (includeWorkshops) {
+                if (includeHotelExtra) {
+                    hotelAmount = 3 * ticketSettings.priceHotel;
+                }
+                amount = ticketSettings.priceTwoDays;
+
+                total = ticketSettings.priceTwoDays + hotelAmount;
+            }
+            if (includeWorkshopsAndPreParty) {
+                amount = ticketSettings.priceThreeDays;
+                if (includeHotelExtra) {
+                    hotelAmount = 4 * ticketSettings.priceHotel;
+                }
+
+                total = ticketSettings.priceThreeDays + hotelAmount;
+            }
+        }
+        console.log("total.sol", total);
+        return total;
+    }
 
     function mintItem(
         string memory tokenURI,
@@ -264,84 +339,16 @@ contract ETHDubaiTicket is ERC721URIStorage {
         console.log("mm %s", msg.value);
         console.log("email %s", attendeeInfo.email);
         console.log(33333);
+        uint256 total;
         Discount memory discount = discounts[msg.sender];
-        uint256 amount = discounts[msg.sender].amount;
-        uint256 hotelAmount = 0;
-        if (amount > 0) {
-            uint256 confPrice = ticketSettings.priceOneDay;
-            if (discount.includeConf) {
-                confPrice =
-                    ticketSettings.priceOneDay -
-                    ((ticketSettings.priceOneDay * amount) / 100);
-            }
-            if (includeHotelExtra) {
-                hotelAmount = 2 * ticketSettings.priceHotel;
-            }
-            require(
-                msg.value >= confPrice + hotelAmount,
-                "Not enough ETH sent; check price!"
-            );
-            if (includeWorkshops) {
-                uint256 twoDayPrice = ticketSettings.priceTwoDays;
-                if (discount.includeWorkshops) {
-                    twoDayPrice =
-                        ticketSettings.priceTwoDays -
-                        ((ticketSettings.priceTwoDays * amount) / 100);
-                }
-                if (includeHotelExtra) {
-                    hotelAmount = 3 * ticketSettings.priceHotel;
-                }
-                require(
-                    msg.value >= twoDayPrice + hotelAmount,
-                    "Not enough ETH sent; check price!"
-                );
-            }
-            if (includeWorkshopsAndPreParty) {
-                uint256 threeDayPrice = ticketSettings.priceThreeDays;
-                if (discount.includeWorkshopsAndPreParty) {
-                    threeDayPrice =
-                        ticketSettings.priceThreeDays -
-                        ((ticketSettings.priceThreeDays * amount) / 100);
-                }
-                if (includeHotelExtra) {
-                    hotelAmount = 4 * ticketSettings.priceHotel;
-                }
-                require(
-                    msg.value >= threeDayPrice + hotelAmount,
-                    "Not enough ETH sent; check price!"
-                );
-            }
-        } else {
-            amount = ticketSettings.priceOneDay;
-            if (includeHotelExtra) {
-                hotelAmount = 2 * ticketSettings.priceHotel;
-            }
-            require(
-                msg.value >= ticketSettings.priceOneDay + hotelAmount,
-                "Not enough ETH sent; check price!"
-            );
 
-            if (includeWorkshops) {
-                if (includeHotelExtra) {
-                    hotelAmount = 3 * ticketSettings.priceHotel;
-                }
-                amount = ticketSettings.priceTwoDays;
-                require(
-                    msg.value >= ticketSettings.priceTwoDays + hotelAmount,
-                    "Not enough ETH sent; check price!"
-                );
-            }
-            if (includeWorkshopsAndPreParty) {
-                amount = ticketSettings.priceThreeDays;
-                if (includeHotelExtra) {
-                    hotelAmount = 4 * ticketSettings.priceHotel;
-                }
-                require(
-                    msg.value >= ticketSettings.priceThreeDays + hotelAmount,
-                    "Not enough ETH sent; check price!"
-                );
-            }
-        }
+        total = getPrice(
+            msg.sender,
+            includeWorkshops,
+            includeWorkshopsAndPreParty,
+            includeHotelExtra
+        );
+        require(msg.value >= total, "Not enough ETH sent; check price!");
         bytes32 uriHash = keccak256(abi.encodePacked(tokenURI));
         //console.log("urihash", uriHash);
         console.log("tokenURI %s", tokenURI);
@@ -367,7 +374,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             discount,
             ticketSettings,
             msg.sender,
-            amount,
+            total,
             id,
             includeHotelExtra
         );
