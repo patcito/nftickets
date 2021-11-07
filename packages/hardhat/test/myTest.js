@@ -1,11 +1,11 @@
 const { ethers } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
-const fs = require("fs");
-const { generatePrimeSync } = require("crypto");
 
 use(solidity);
-
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 describe("My Dapp", function () {
   let myContract;
 
@@ -14,34 +14,15 @@ describe("My Dapp", function () {
       const [owner] = await ethers.getSigners();
       const ETHDubaiTicket = await ethers.getContractFactory("ETHDubaiTicket");
 
-      let uploadedAssets = JSON.parse(fs.readFileSync("./uploaded.json"));
-      let bytes32Array = [];
-      for (let a in uploadedAssets) {
-        console.log(" 🏷 IPFS:", a);
-        let bytes32 = ethers.utils.id(a);
-        console.log(" #️⃣ hashed:", bytes32);
-        bytes32Array.push(bytes32);
-      }
-      console.log(" \n");
-      myContract = await ETHDubaiTicket.deploy(bytes32Array);
+      myContract = await ETHDubaiTicket.deploy();
     });
-    /*
-    describe("setPurpose()", function () {
-      it("Should be able to set a new purpose", async function () {
-        //const newPurpose = "Test Purpose";
 
-        //        await myContract.setPurpose(newPurpose);
-        //expect(await myContract.purpose()).to.equal(newPurpose);
-        expect(true).to.equal(true);
-      });
-    });
-*/
     describe("ticketSettings()", function () {
       it("Should be able to get ticket settings", async function () {
-        const ticketSettings = await myContract.ticketSettings();
+        let settings = await myContract.settings();
         //expect(await myContract.purpose()).to.equal(newPurpose);
         //        expect(true).to.equal(true);
-
+        let ticketSettings = settings.ticketSettings;
         expect(ticketSettings.priceOneDay.toString()).to.equal(
           "100000000000000000"
         );
@@ -148,6 +129,7 @@ describe("My Dapp", function () {
         );
       });
     });
+
     describe("setTicketSettings()", function () {
       it("Should be able to set ticket settings", async function () {
         let name = "late bird";
@@ -163,7 +145,8 @@ describe("My Dapp", function () {
           pThreeDays,
           pHotel
         );
-        const updatedTicketSettings = await myContract.ticketSettings();
+        settings = await myContract.settings();
+        const updatedTicketSettings = settings.ticketSettings;
         expect(updatedTicketSettings.priceOneDay.toString()).to.equal(
           ethers.utils.parseEther("1.0").toString()
         );
@@ -197,7 +180,9 @@ describe("My Dapp", function () {
         expect(updateTicketSettingsFromNonOwner()).to.be.revertedWith(
           "only owner can set ticket settings"
         );
-        const nonUpdatingSettings = await myContract.ticketSettings();
+        settings = await myContract.settings();
+        const nonUpdatingSettings = settings.ticketSettings;
+
         expect(nonUpdatingSettings.priceOneDay.toString()).to.equal(
           ethers.utils.parseEther("1.0").toString()
         );
@@ -214,8 +199,6 @@ describe("My Dapp", function () {
 
       describe("mintItem()", function () {
         it("Should be able to mint item", async function () {
-          let uploadedAssets = JSON.parse(fs.readFileSync("./uploaded.json"));
-          let tokenURI = Object.keys(uploadedAssets)[0];
           let attendeeInfo = {
             email: "patcito@gmail.com",
             name: "Patrick Aljord",
@@ -239,7 +222,6 @@ describe("My Dapp", function () {
           await myContract
             .connect(nonOwner)
             .mintItem(
-              tokenURI,
               attendeeInfo,
               ticketCode,
               resellable,
@@ -248,6 +230,84 @@ describe("My Dapp", function () {
               includeHotelExtra,
               { value: ethers.utils.parseEther("3.8").toHexString() }
             );
+        });
+      });
+
+      describe("mintItem() fail", function () {
+        it("Should not be able to mint item", async function () {
+          let attendeeInfo = {
+            email: "patcito@gmail.com",
+            name: "Patrick Aljord",
+            twitter: "patcito",
+            bio: "hello there",
+            job: "dev",
+            company: "yearn",
+            diet: "omnivore",
+            tshirt: "M",
+          };
+          let ticketCode = "xyz";
+          let resellable = {
+            isResellable: true,
+            price: ethers.BigNumber.from("50"),
+          };
+          let includeWorkshops = false;
+          let includeWorkshopsAndPreParty = true;
+          let includeHotelExtra = true;
+          const [owner, nonOwner] = await ethers.getSigners();
+          const nonOwnerAddress = nonOwner.address;
+          const mintAgain = async () => {
+            await myContract
+              .connect(nonOwner)
+              .mintItem(
+                attendeeInfo,
+                ticketCode,
+                resellable,
+                includeWorkshops,
+                includeWorkshopsAndPreParty,
+                includeHotelExtra,
+                { value: ethers.utils.parseEther("3.8").toHexString() }
+              );
+          };
+          expect(mintAgain()).to.be.revertedWith("sorry, we're sold out!");
+        });
+      });
+
+      describe("mintItem() succeed", function () {
+        it("Should be able to mint item again", async function () {
+          let attendeeInfo = {
+            email: "patcito@gmail.com",
+            name: "Patrick Aljord",
+            twitter: "patcito",
+            bio: "hello there",
+            job: "dev",
+            company: "yearn",
+            diet: "omnivore",
+            tshirt: "M",
+          };
+          let ticketCode = "xyz";
+          let resellable = {
+            isResellable: true,
+            price: ethers.BigNumber.from("50"),
+          };
+          let includeWorkshops = false;
+          let includeWorkshopsAndPreParty = true;
+          let includeHotelExtra = true;
+          const [owner, nonOwner] = await ethers.getSigners();
+          const nonOwnerAddress = nonOwner.address;
+          await myContract.setMaxMint(100);
+          const mintAgain = async () => {
+            await myContract
+              .connect(nonOwner)
+              .mintItem(
+                attendeeInfo,
+                ticketCode,
+                resellable,
+                includeWorkshops,
+                includeWorkshopsAndPreParty,
+                includeHotelExtra,
+                { value: ethers.utils.parseEther("3.8").toHexString() }
+              );
+          };
         });
       });
 
@@ -297,8 +357,6 @@ describe("My Dapp", function () {
 
       describe("mintItem() with discount", function () {
         it("Should be able to mint item", async function () {
-          let uploadedAssets = JSON.parse(fs.readFileSync("./uploaded.json"));
-          let tokenURI = Object.keys(uploadedAssets)[1];
           let attendeeInfo = {
             email: "patcito+nonowner@gmail.com",
             name: "Patrick Aljord",
@@ -322,7 +380,6 @@ describe("My Dapp", function () {
           await myContract
             .connect(nonOwner)
             .mintItem(
-              tokenURI,
               attendeeInfo,
               ticketCode,
               resellable,
