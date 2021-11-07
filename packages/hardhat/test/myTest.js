@@ -84,7 +84,7 @@ describe("My Dapp", function () {
       });
     });
 
-    describe("getPrice() 1 without Hotel", function () {
+    describe("getPrice() 1 day without Hotel", function () {
       it("Should return price with with discount", async function () {
         let includeWorkshops = false;
         let includeWorkshopsAndPreParty = false;
@@ -411,6 +411,17 @@ describe("My Dapp", function () {
           expect(total.toString()).to.equal(
             ethers.utils.parseEther("2.3").toString()
           );
+        });
+      });
+
+      describe("generateSVGofTokenById(uint256 id)", function () {
+        it("Should return price with with discount", async function () {
+          const generateSVG = async () => {
+            return await myContract.generateSVGofTokenById();
+          };
+          const svg = await generateSVG();
+          console.log(svg);
+          expect(svg).to.equal(svg);
         });
       });
     });
