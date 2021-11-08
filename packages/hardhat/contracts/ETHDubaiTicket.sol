@@ -97,6 +97,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string company;
         string diet;
         string tshirt;
+        string telegram;
     }
 
     struct Colors {
@@ -121,6 +122,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
         address to;
         uint256 tokenId;
         uint256 amount;
+    }
+
+    struct MintInfo {
+        AttendeeInfo attendeeInfo;
+        string ticketCode;
+        Resellable resellable;
+        bool includeWorkshops;
+        bool includeWorkshopsAndPreParty;
+        bool includeHotelExtra;
     }
 
     //this marks an item in IPFS as "forsale"
@@ -330,14 +340,11 @@ contract ETHDubaiTicket is ERC721URIStorage {
         return total;
     }
 
-    function mintItem(
-        AttendeeInfo memory attendeeInfo,
-        string memory ticketCode,
-        Resellable memory resellable,
-        bool includeWorkshops,
-        bool includeWorkshopsAndPreParty,
-        bool includeHotelExtra
-    ) public payable returns (uint256) {
+    function mintItem(MintInfo memory mintInfo)
+        public
+        payable
+        returns (uint256)
+    {
         console.log(1111);
         require(
             _tokenIds.current() < settings.maxMint,
@@ -345,21 +352,22 @@ contract ETHDubaiTicket is ERC721URIStorage {
         );
 
         require(
-            !(includeWorkshops && includeWorkshopsAndPreParty),
+            !(mintInfo.includeWorkshops &&
+                mintInfo.includeWorkshopsAndPreParty),
             "Can't include both workshops and workshops and pre party!"
         );
         console.log(22222);
         console.log("mm %s", msg.value);
-        console.log("email %s", attendeeInfo.email);
+        console.log("email %s", mintInfo.attendeeInfo.email);
         console.log(33333);
         uint256 total;
         Discount memory discount = settings.discounts[msg.sender];
 
         total = getPrice(
             msg.sender,
-            includeWorkshops,
-            includeWorkshopsAndPreParty,
-            includeHotelExtra
+            mintInfo.includeWorkshops,
+            mintInfo.includeWorkshopsAndPreParty,
+            mintInfo.includeHotelExtra
         );
         require(msg.value >= total, "Not enough ETH sent; check price!");
         //console.log("urihash", uriHash);
@@ -374,7 +382,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 blockhash(block.number + 1),
                 msg.sender,
-                address(this)
+                address(this),
+                "foo1"
             )
         );
         _idToColors[id].color1 =
@@ -386,7 +395,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 blockhash(block.number + 2),
                 msg.sender,
-                address(this)
+                address(this),
+                "foo2"
             )
         );
         _idToColors[id].color2 =
@@ -398,7 +408,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 blockhash(block.number + 3),
                 msg.sender,
-                address(this)
+                address(this),
+                "foo3"
             )
         );
         _idToColors[id].color3 =
@@ -410,7 +421,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 blockhash(block.number + 4),
                 msg.sender,
-                address(this)
+                address(this),
+                "foo4"
             )
         );
         _idToColors[id].color4 =
@@ -420,9 +432,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
 
         bytes32 predictableRandom5 = keccak256(
             abi.encodePacked(
-                blockhash(block.number + 5),
+                blockhash(block.number + 50),
                 msg.sender,
-                address(this)
+                address(this),
+                "foo5"
             )
         );
         _idToColors[id].color5 =
@@ -430,14 +443,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
             (bytes2(predictableRandom5[1]) >> 8) |
             (bytes3(predictableRandom5[2]) >> 16);
 
-        _idToAttendeeInfo[id] = attendeeInfo;
-        _idToTicketCode[id] = ticketCode;
-        _idToTicketResellable[id] = resellable;
+        _idToAttendeeInfo[id] = mintInfo.attendeeInfo;
+        _idToTicketCode[id] = mintInfo.ticketCode;
+        _idToTicketResellable[id] = mintInfo.resellable;
         _idToScanned[id] = false;
         _idToCanceled[id] = false;
-        _idToIncludeWorkshops[id] = includeWorkshops;
-        _idToIncludeWorkshopsAndPreParty[id] = includeWorkshopsAndPreParty;
-        _idToIncludeHotel[id] = includeHotelExtra;
+        _idToIncludeWorkshops[id] = mintInfo.includeWorkshops;
+        _idToIncludeWorkshopsAndPreParty[id] = mintInfo
+            .includeWorkshopsAndPreParty;
+        _idToIncludeHotel[id] = mintInfo.includeHotelExtra;
 
         MintLog memory mintLog = MintLog(
             discount,
@@ -445,7 +459,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             msg.sender,
             total,
             id,
-            includeHotelExtra
+            mintInfo.includeHotelExtra
         );
         emit LogMint(mintLog, "mintItem");
         return id;
@@ -456,11 +470,34 @@ contract ETHDubaiTicket is ERC721URIStorage {
         view
         returns (string memory)
     {
+        string memory preEvent1;
+        string memory preEvent2;
+        string memory preEvent3;
+        if (_idToIncludeWorkshops[id]) {
+            preEvent1 = "Workshops";
+            if (_idToIncludeHotel[id]) {
+                preEvent2 = "Hotel";
+            }
+        } else if (_idToIncludeWorkshopsAndPreParty[id]) {
+            preEvent1 = "Workshops";
+            preEvent2 = "Preparties";
+            if (_idToIncludeHotel[id]) {
+                preEvent3 = "Hotel";
+            }
+        }
         string memory svg = string(
             abi.encodePacked(
-                '<svg width="900" height="400" xmlns="http://www.w3.org/2000/svg">',
+                '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                "</svg>"
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297">',
+                preEvent1,
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584">',
+                preEvent2,
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345">',
+                preEvent3,
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@',
+                _idToAttendeeInfo[id].telegram,
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
             )
         );
 
@@ -471,19 +508,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function renderTokenById(uint256 id) public view returns (string memory) {
         string memory render = string(
             abi.encodePacked(
-                '<g transform="scale(0.72064248)"><polygon"fill="#',
                 _idToColors[id].color1.toColor(),
-                '" points="125.1661,9.5 125.1661,285.168 127.9611,287.958 255.9231,212.32 127.9611,0"/><polygon fill="#',
+                '" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#',
                 _idToColors[id].color2.toColor(),
-                '" points="127.962,287.959 127.962,154.158 127.962,0 0,212.32"/><polygon fill="#',
+                '" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#',
                 _idToColors[id].color3.toColor(),
-                '" points="126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 255.9991,236.5866 127.9611,312.1866"/> <polygon fill="#',
+                '" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#',
                 _idToColors[id].color2.toColor(),
-                '" points="127.962,416.9052 127.962,312.1852 0,236.5852"/><polygon fill="#',
+                '" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#',
                 _idToColors[id].color4.toColor(),
-                '" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587" /><polygon fill="#',
-                _idToColors[id].color5.toColor(),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588" /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="138.13451" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="177.6657" >Workshops</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="217.94856" >Preparty</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="261.40619" >Hotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="82.287415" >#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="310.95245" >@telegram</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="233.76788" y="34.416286" >ETHDubai Ticket</text>'
+                '" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#',
+                _idToColors[id].color5.toColor()
             )
         );
 
@@ -524,7 +559,16 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string memory description = string(
             abi.encodePacked("This is a ticket to ETHDubai conference 2021.")
         );
+        console.log("svg %s", generateSVGofTokenById(id));
         string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
+        string memory hasWorkshops = "false";
+        string memory hasHotel = "false";
+        if (_idToIncludeWorkshops[id]) {
+            hasWorkshops = "true";
+        }
+        if (_idToIncludeHotel[id]) {
+            hasHotel = "true";
+        }
 
         return
             string(
@@ -537,16 +581,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
                                 name,
                                 '", "description":"',
                                 description,
-                                '", "external_url":"https://burnyboys.com/token/',
+                                '", "external_url":"https://www.ethdubaiconf.org/token/',
                                 id.toString(),
-                                '", "attributes": [{"trait_type": "workshops", "value": "',
-                                _idToIncludeWorkshops[id],
-                                '"},{"trait_type": "chubbiness", "value": ',
-                                _idToIncludeHotel[id],
-                                '}], "owner":"',
+                                '", "attributes": [{"pre_event_type": "workshops", "value": "',
+                                hasWorkshops,
+                                '"},{"pre_event_type": "hotel", "value": "',
+                                hasHotel,
+                                '"}], "owner":"',
                                 (uint160(ownerOf(id))).toHexString(20),
-                                '", "image": "',
-                                "data:image/svg+xml;base64,",
+                                '", "image": "data:image/svg+xml;base64,',
                                 image,
                                 '"}'
                             )

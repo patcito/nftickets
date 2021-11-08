@@ -208,6 +208,7 @@ describe("My Dapp", function () {
             company: "yearn",
             diet: "omnivore",
             tshirt: "M",
+            telegram: "patcitotel",
           };
           let ticketCode = "xyz";
           let resellable = {
@@ -219,17 +220,17 @@ describe("My Dapp", function () {
           let includeHotelExtra = true;
           const [owner, nonOwner] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
-          await myContract
-            .connect(nonOwner)
-            .mintItem(
+          await myContract.connect(nonOwner).mintItem(
+            {
               attendeeInfo,
               ticketCode,
               resellable,
               includeWorkshops,
               includeWorkshopsAndPreParty,
               includeHotelExtra,
-              { value: ethers.utils.parseEther("3.8").toHexString() }
-            );
+            },
+            { value: ethers.utils.parseEther("3.8").toHexString() }
+          );
         });
       });
 
@@ -244,6 +245,7 @@ describe("My Dapp", function () {
             company: "yearn",
             diet: "omnivore",
             tshirt: "M",
+            telegram: "patcitotel",
           };
           let ticketCode = "xyz";
           let resellable = {
@@ -256,17 +258,17 @@ describe("My Dapp", function () {
           const [owner, nonOwner] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
           const mintAgain = async () => {
-            await myContract
-              .connect(nonOwner)
-              .mintItem(
+            await myContract.connect(nonOwner).mintItem(
+              {
                 attendeeInfo,
                 ticketCode,
                 resellable,
                 includeWorkshops,
                 includeWorkshopsAndPreParty,
                 includeHotelExtra,
-                { value: ethers.utils.parseEther("3.8").toHexString() }
-              );
+              },
+              { value: ethers.utils.parseEther("3.8").toHexString() }
+            );
           };
           expect(mintAgain()).to.be.revertedWith("sorry, we're sold out!");
         });
@@ -283,6 +285,7 @@ describe("My Dapp", function () {
             company: "yearn",
             diet: "omnivore",
             tshirt: "M",
+            telegram: "patcitotel",
           };
           let ticketCode = "xyz";
           let resellable = {
@@ -296,17 +299,17 @@ describe("My Dapp", function () {
           const nonOwnerAddress = nonOwner.address;
           await myContract.setMaxMint(100);
           const mintAgain = async () => {
-            await myContract
-              .connect(nonOwner)
-              .mintItem(
+            await myContract.connect(nonOwner).mintItem(
+              {
                 attendeeInfo,
                 ticketCode,
                 resellable,
                 includeWorkshops,
                 includeWorkshopsAndPreParty,
                 includeHotelExtra,
-                { value: ethers.utils.parseEther("3.8").toHexString() }
-              );
+              },
+              { value: ethers.utils.parseEther("3.8").toHexString() }
+            );
           };
         });
       });
@@ -366,6 +369,7 @@ describe("My Dapp", function () {
             company: "yearn",
             diet: "omnivore",
             tshirt: "M",
+            telegram: "patcitotel",
           };
           let ticketCode = "xyz";
           let resellable = {
@@ -377,17 +381,17 @@ describe("My Dapp", function () {
           let includeHotelExtra = true;
           const [owner, nonOwner] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
-          await myContract
-            .connect(nonOwner)
-            .mintItem(
+          await myContract.connect(nonOwner).mintItem(
+            {
               attendeeInfo,
               ticketCode,
               resellable,
               includeWorkshops,
               includeWorkshopsAndPreParty,
               includeHotelExtra,
-              { value: ethers.utils.parseEther("2.3").toHexString() }
-            );
+            },
+            { value: ethers.utils.parseEther("2.3").toHexString() }
+          );
         });
       });
 
@@ -414,14 +418,82 @@ describe("My Dapp", function () {
         });
       });
 
-      describe("generateSVGofTokenById(uint256 id)", function () {
-        it("Should return price with with discount", async function () {
-          const generateSVG = async () => {
-            return await myContract.generateSVGofTokenById();
+      describe("mintItem() with conference only", function () {
+        it("Should be able to mint item", async function () {
+          let attendeeInfo = {
+            email: "patcito+nonowner2@gmail.com",
+            name: "Patrick Aljord",
+            twitter: "patcito",
+            bio: "hello there",
+            job: "dev",
+            company: "yearn",
+            diet: "omnivore",
+            tshirt: "M",
+            telegram: "patcitotel",
           };
-          const svg = await generateSVG();
-          console.log(svg);
-          expect(svg).to.equal(svg);
+          let ticketCode = "xyz";
+          let resellable = {
+            isResellable: true,
+            price: ethers.BigNumber.from("50"),
+          };
+          let includeWorkshops = false;
+          let includeWorkshopsAndPreParty = false;
+          let includeHotelExtra = false;
+          const [owner, nonOwner, nonOwner2] = await ethers.getSigners();
+          const nonOwnerAddress = nonOwner.address;
+          await myContract.connect(nonOwner2).mintItem(
+            {
+              attendeeInfo,
+              ticketCode,
+              resellable,
+              includeWorkshops,
+              includeWorkshopsAndPreParty,
+              includeHotelExtra,
+            },
+            { value: ethers.utils.parseEther("1.0").toHexString() }
+          );
+        });
+
+        describe("generateSVGofTokenById(uint256 id)", function () {
+          it("Should return svg of ticket id", async function () {
+            const generateSVG = async () => {
+              return await myContract.tokenURI(1);
+            };
+            const data = await generateSVG();
+            console.log(data);
+            //console.log(atob(data));
+            const json = Buffer.from(data.substring(29), "base64").toString();
+            console.log(json);
+            const obj = JSON.parse(json);
+            console.log(obj);
+            const svg = Buffer.from(
+              obj.image.substring(26),
+              "base64"
+            ).toString();
+            expect(svg).to.equal(svg);
+          });
+        });
+
+        describe("generateSVGofTokenById(uint256 id) conference only badge", function () {
+          it("Should return svg of ticket id", async function () {
+            const generateSVG = async () => {
+              return await myContract.tokenURI(3);
+            };
+            const data = await generateSVG();
+            console.log(data);
+            //console.log(atob(data));
+            const json = Buffer.from(data.substring(29), "base64").toString();
+            console.log(json);
+            const obj = JSON.parse(json);
+            console.log(obj);
+            const svg = Buffer.from(
+              obj.image.substring(26),
+              "base64"
+            ).toString();
+            expect(svg).to.equal(
+              '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#4f15b1" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#5eedc1" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#bb604e" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#5eedc1" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#7265ef" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#920e2b" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@patcitotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+            );
+          });
         });
       });
     });
