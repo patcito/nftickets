@@ -221,14 +221,16 @@ describe("My Dapp", function () {
           const [owner, nonOwner] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
           await myContract.connect(nonOwner).mintItem(
-            {
-              attendeeInfo,
-              ticketCode,
-              resellable,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-            },
+            [
+              {
+                attendeeInfo,
+                ticketCode,
+                resellable,
+                includeWorkshops,
+                includeWorkshopsAndPreParty,
+                includeHotelExtra,
+              },
+            ],
             { value: ethers.utils.parseEther("3.8").toHexString() }
           );
         });
@@ -259,14 +261,16 @@ describe("My Dapp", function () {
           const nonOwnerAddress = nonOwner.address;
           const mintAgain = async () => {
             await myContract.connect(nonOwner).mintItem(
-              {
-                attendeeInfo,
-                ticketCode,
-                resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
-              },
+              [
+                {
+                  attendeeInfo,
+                  ticketCode,
+                  resellable,
+                  includeWorkshops,
+                  includeWorkshopsAndPreParty,
+                  includeHotelExtra,
+                },
+              ],
               { value: ethers.utils.parseEther("3.8").toHexString() }
             );
           };
@@ -300,14 +304,16 @@ describe("My Dapp", function () {
           await myContract.setMaxMint(100);
           const mintAgain = async () => {
             await myContract.connect(nonOwner).mintItem(
-              {
-                attendeeInfo,
-                ticketCode,
-                resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
-              },
+              [
+                {
+                  attendeeInfo,
+                  ticketCode,
+                  resellable,
+                  includeWorkshops,
+                  includeWorkshopsAndPreParty,
+                  includeHotelExtra,
+                },
+              ],
               { value: ethers.utils.parseEther("3.8").toHexString() }
             );
           };
@@ -382,14 +388,16 @@ describe("My Dapp", function () {
           const [owner, nonOwner] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
           await myContract.connect(nonOwner).mintItem(
-            {
-              attendeeInfo,
-              ticketCode,
-              resellable,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-            },
+            [
+              {
+                attendeeInfo,
+                ticketCode,
+                resellable,
+                includeWorkshops,
+                includeWorkshopsAndPreParty,
+                includeHotelExtra,
+              },
+            ],
             { value: ethers.utils.parseEther("2.3").toHexString() }
           );
         });
@@ -442,14 +450,16 @@ describe("My Dapp", function () {
           const [owner, nonOwner, nonOwner2] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
           await myContract.connect(nonOwner2).mintItem(
-            {
-              attendeeInfo,
-              ticketCode,
-              resellable,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-            },
+            [
+              {
+                attendeeInfo,
+                ticketCode,
+                resellable,
+                includeWorkshops,
+                includeWorkshopsAndPreParty,
+                includeHotelExtra,
+              },
+            ],
             { value: ethers.utils.parseEther("1.0").toHexString() }
           );
         });

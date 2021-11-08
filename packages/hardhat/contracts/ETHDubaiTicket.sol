@@ -312,7 +312,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 total = threeDayPrice + hotelAmount;
             }
         } else {
-            amount = settings.ticketSettings.priceOneDay;
             if (includeHotelExtra) {
                 hotelAmount = 2 * settings.ticketSettings.priceHotel;
             }
@@ -323,12 +322,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 if (includeHotelExtra) {
                     hotelAmount = 3 * settings.ticketSettings.priceHotel;
                 }
-                amount = settings.ticketSettings.priceTwoDays;
 
                 total = settings.ticketSettings.priceTwoDays + hotelAmount;
             }
             if (includeWorkshopsAndPreParty) {
-                amount = settings.ticketSettings.priceThreeDays;
                 if (includeHotelExtra) {
                     hotelAmount = 4 * settings.ticketSettings.priceHotel;
                 }
@@ -336,40 +333,34 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 total = settings.ticketSettings.priceThreeDays + hotelAmount;
             }
         }
+        /* if (amount == 0) {
+            address devdao = 0xb3067e47d005f9A588162A710071d18098c93E04;
+            bool ddBalance = devdao.call(
+                bytes4(sha3("balanceOf(address)")),
+                sender
+            );
+        }*/
         console.log("total.sol", total);
         return total;
     }
 
-    function mintItem(MintInfo memory mintInfo)
-        public
-        payable
-        returns (uint256)
-    {
-        console.log(1111);
-        require(
-            _tokenIds.current() < settings.maxMint,
-            "sorry, we're sold out!"
-        );
-
+    function processMintIntem(
+        MintInfo memory mintInfo,
+        address sender,
+        uint256 value
+    ) internal returns (uint256) {
         require(
             !(mintInfo.includeWorkshops &&
                 mintInfo.includeWorkshopsAndPreParty),
             "Can't include both workshops and workshops and pre party!"
         );
         console.log(22222);
-        console.log("mm %s", msg.value);
+        console.log("mm %s", value);
         console.log("email %s", mintInfo.attendeeInfo.email);
         console.log(33333);
         uint256 total;
-        Discount memory discount = settings.discounts[msg.sender];
+        Discount memory discount = settings.discounts[sender];
 
-        total = getPrice(
-            msg.sender,
-            mintInfo.includeWorkshops,
-            mintInfo.includeWorkshopsAndPreParty,
-            mintInfo.includeHotelExtra
-        );
-        require(msg.value >= total, "Not enough ETH sent; check price!");
         //console.log("urihash", uriHash);
 
         //make sure they are only minting something that is marked "forsale"
@@ -377,11 +368,11 @@ contract ETHDubaiTicket is ERC721URIStorage {
         _tokenIds.increment();
 
         uint256 id = _tokenIds.current();
-        _mint(msg.sender, id);
+        _mint(sender, id);
         bytes32 predictableRandom1 = keccak256(
             abi.encodePacked(
                 blockhash(block.number + 1),
-                msg.sender,
+                sender,
                 address(this),
                 "foo1"
             )
@@ -394,7 +385,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom2 = keccak256(
             abi.encodePacked(
                 blockhash(block.number + 2),
-                msg.sender,
+                sender,
                 address(this),
                 "foo2"
             )
@@ -407,7 +398,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom3 = keccak256(
             abi.encodePacked(
                 blockhash(block.number + 3),
-                msg.sender,
+                sender,
                 address(this),
                 "foo3"
             )
@@ -420,7 +411,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom4 = keccak256(
             abi.encodePacked(
                 blockhash(block.number + 4),
-                msg.sender,
+                sender,
                 address(this),
                 "foo4"
             )
@@ -433,7 +424,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom5 = keccak256(
             abi.encodePacked(
                 blockhash(block.number + 50),
-                msg.sender,
+                sender,
                 address(this),
                 "foo5"
             )
@@ -456,13 +447,40 @@ contract ETHDubaiTicket is ERC721URIStorage {
         MintLog memory mintLog = MintLog(
             discount,
             settings.ticketSettings,
-            msg.sender,
+            sender,
             total,
             id,
             mintInfo.includeHotelExtra
         );
         emit LogMint(mintLog, "mintItem");
         return id;
+    }
+
+    function mintItem(MintInfo[] memory mintInfos)
+        public
+        payable
+        returns (bool)
+    {
+        require(
+            _tokenIds.current() < settings.maxMint,
+            "sorry, we're sold out!"
+        );
+        uint256 total = 0;
+        for (uint256 i = 0; i < mintInfos.length; i++) {
+            total += getPrice(
+                msg.sender,
+                mintInfos[i].includeWorkshops,
+                mintInfos[i].includeWorkshopsAndPreParty,
+                mintInfos[i].includeHotelExtra
+            );
+        }
+        require(msg.value >= total, "Not enough ETH sent; check price!");
+
+        for (uint256 i = 0; i < mintInfos.length; i++) {
+            processMintIntem(mintInfos[i], msg.sender, msg.value);
+        }
+
+        return true;
     }
 
     function generateSVGofTokenById(uint256 id)
