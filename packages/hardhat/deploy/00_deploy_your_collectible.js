@@ -10,17 +10,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   console.log("\n\n 📡 Deploying...\n");
 
-  // read in all the assets to get their IPFS hash...
-  let uploadedAssets = JSON.parse(fs.readFileSync("./uploaded.json"));
-  let bytes32Array = [];
-  for (let a in uploadedAssets) {
-    console.log(" 🏷 IPFS:", a);
-    let bytes32 = ethers.utils.id(a);
-    console.log(" #️⃣ hashed:", bytes32);
-    bytes32Array.push(bytes32);
-  }
-  console.log(" \n");
-
   await deploy("ETHDubaiTicket", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,

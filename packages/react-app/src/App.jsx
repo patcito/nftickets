@@ -539,7 +539,7 @@ function App(props) {
   const [transferToAddresses, setTransferToAddresses] = useState({});
 
   const [loadedAssets, setLoadedAssets] = useState();
-  const [email, setEmail] = useState("patcito@gmail.com");
+  /* const [email, setEmail] = useState("patcito@gmail.com");
   const [name, setName] = useState("Patrick Aljord");
   const [twitter, setTwitter] = useState("patcito");
   const [bio, setBio] = useState("i code");
@@ -550,9 +550,9 @@ function App(props) {
   const [ticketCode, setTicketCode] = useState("random");
   const [includeWorkshops, setIncludeWorkshops] = useState(false);
   const [includeWorkshopsAndPreParty, setIncludeWorkshopsAndPreParty] = useState(false);
-  const [includeHotelExtra, setIncludeHotelExtra] = useState(true);
+  const [includeHotelExtra, setIncludeHotelExtra] = useState(true);*/
   useEffect(async () => {
-    const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
+    /*  const encryptedEmail = await EthCrypto.encryptWithPublicKey(pubKey, email);
     const encryptedName = await EthCrypto.encryptWithPublicKey(pubKey, name);
     const encryptedTwitter = await EthCrypto.encryptWithPublicKey(pubKey, twitter);
     const encryptedBio = await EthCrypto.encryptWithPublicKey(pubKey, bio);
@@ -569,8 +569,9 @@ function App(props) {
     setCompany(EthCrypto.cipher.stringify(encryptedCompany));
     setDiet(EthCrypto.cipher.stringify(encryptedDiet));
     setTshirt(EthCrypto.cipher.stringify(encryptedTshirt));
-    setTicketCode(EthCrypto.cipher.stringify(encryptedTicketCode));
+    setTicketCode(EthCrypto.cipher.stringify(encryptedTicketCode));*/
     //to decrypt:
+    //generate public key: EthCrypto.publicKeyByPrivateKey(privatekey)
     //dd=EthCrypto.cipher.parse(email)
     //m=EthCrypto.decryptWithPrivateKey("<private key>", dd)
     //m.then((email)=>{console.log(email)})
@@ -602,39 +603,7 @@ function App(props) {
 
     const cardActions = [];
     if (loadedAssets[a].forSale) {
-      cardActions.push(
-        <div>
-          <Button
-            onClick={() => {
-              console.log("gasPrice,", gasPrice);
-              /*string memory email,
-        string memory name,
-        string memory twitter,
-        string memory bio,
-        string memory job,
-        string memory company,
-        string memory diet,
-        string memory tshirt*/
-              console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt, includeWorkshops);
-              console.log("lololo", loadedAssets[a].id);
-              tx(
-                writeContracts.ETHDubaiTicket.mintItem(
-                  loadedAssets[a].id,
-                  { email, name, twitter, bio, job, company, diet, tshirt },
-                  ticketCode,
-                  { isResellable: true, price: "150000000000000000" },
-                  includeWorkshops,
-                  includeWorkshopsAndPreParty,
-                  includeHotelExtra,
-                  { gasPrice, value: "300000000000000000" },
-                ),
-              );
-            }}
-          >
-            Mint
-          </Button>
-        </div>,
-      );
+      cardActions.push(<div></div>);
     } else {
       cardActions.push(
         <div>
@@ -673,7 +642,25 @@ function App(props) {
       </Card>,
     );
   }
-
+  let attendeeInfo = {
+    email: "patcito+nonowner2@gmail.com",
+    name: "Patrick Aljord",
+    twitter: "patcito",
+    bio: "hello there",
+    job: "dev",
+    company: "yearn",
+    diet: "omnivore",
+    tshirt: "M",
+    telegram: "patcitotel",
+  };
+  let ticketCode = "xyz";
+  let resellable = {
+    isResellable: true,
+    price: ethers.BigNumber.from("50"),
+  };
+  let includeWorkshops = false;
+  let includeWorkshopsAndPreParty = false;
+  let includeHotelExtra = false;
   return (
     <div className="App">
       {/* ✏️ Edit the header and change the title to your project name */}
@@ -754,7 +741,39 @@ function App(props) {
 
             <div style={{ maxWidth: 820, margin: "auto", marginTop: 32, paddingBottom: 256 }}>
               <StackGrid columnWidth={200} gutterWidth={16} gutterHeight={16}>
-                {galleryList}
+                <Button
+                  onClick={() => {
+                    console.log("gasPrice,", gasPrice);
+                    /*string memory email,
+        string memory name,
+        string memory twitter,
+        string memory bio,
+        string memory job,
+        string memory company,
+        string memory diet,
+        string memory tshirt*/
+                    // console.log("lalalala", email, name, twitter, bio, job, company, diet, tshirt, includeWorkshops);
+                    //console.log("lololo", loadedAssets[a].id);
+                    tx(
+                      writeContracts.ETHDubaiTicket.mintItem(
+                        [
+                          {
+                            attendeeInfo,
+                            ticketCode,
+                            resellable,
+                            includeWorkshops,
+                            includeWorkshopsAndPreParty,
+                            includeHotelExtra,
+                          },
+                        ],
+
+                        { value: "100000000000000000" },
+                      ),
+                    );
+                  }}
+                >
+                  Mint
+                </Button>
               </StackGrid>
             </div>
           </Route>

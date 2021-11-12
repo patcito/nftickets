@@ -61,6 +61,26 @@ contract ETHDubaiTicket is ERC721URIStorage {
             0.2 ether,
             0.1 ether
         );
+        /*settings.ticketOptions[0] = 0.1 ether;
+        settings.ticketOptions[1] = 2 ether;
+        settings.ticketOptions[2] = 0.2 ether;
+        settings.ticketOptions[3] = 0.05 ether;
+        settings.ticketOptions[4] = 0.08 ether;
+        settings.ticketOptions[5] = 0.2 ether;
+        settings.ticketOptions[6] = 2.15 ether;
+        settings.ticketOptions[7] = 0.4 ether;
+        settings.ticketOptions[8] = 0.45 ether;
+*/
+        settings.ticketOptionPrices["conference"] = 0.1 ether;
+        settings.ticketOptionPrices["workshop"] = 2 ether;
+        settings.ticketOptionPrices["workshopAndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["hotel"] = 0.05 ether;
+        settings.ticketOptionPrices["safari"] = 0.08 ether;
+        settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
+        settings.ticketOptionPrices["hotelWorkshops"] = 2.15 ether;
+        settings.ticketOptionPrices["hotelWorkshopsAndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["hotelSafari"] = 0.45 ether;
+
         //for (uint256 i = 0; i < assetsForSale.length; i++) {
     }
 
@@ -70,12 +90,13 @@ contract ETHDubaiTicket is ERC721URIStorage {
     }
 
     struct Discount {
-        bool includeConf;
-        bool includeWorkshops;
-        bool includeWorkshopsAndPreParty;
+        string[] ticketOptions;
         uint256 amount;
     }
 
+    //TODO: add soldOutOneDay
+    //TODO: add soldOutTwoDay
+    //TODO: add soldOutThreeDay
     struct TicketSettings {
         string name;
         uint256 priceOneDay;
@@ -83,14 +104,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
         uint256 priceThreeDays;
         uint256 priceHotel;
     }
+
     struct Settings {
         TicketSettings ticketSettings;
         uint256 maxMint;
         mapping(address => Discount) discounts;
+        mapping(string => uint256) ticketOptionPrices;
     }
     struct AttendeeInfo {
         string email;
-        string name;
+        string fname;
+        string lname;
         string twitter;
         string bio;
         string job;
@@ -114,7 +138,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         address buyer;
         uint256 amount;
         uint256 tokenId;
-        bool withHotelExtra;
+        string ticketOption;
     }
 
     struct ResellLog {
@@ -127,6 +151,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
     struct MintInfo {
         AttendeeInfo attendeeInfo;
         string ticketCode;
+        string ticketOption;
         Resellable resellable;
         bool includeWorkshops;
         bool includeWorkshopsAndPreParty;
@@ -142,26 +167,19 @@ contract ETHDubaiTicket is ERC721URIStorage {
     mapping(uint256 => Resellable) public _idToTicketResellable;
     mapping(uint256 => bool) public _idToScanned;
     mapping(uint256 => bool) public _idToCanceled;
-    mapping(uint256 => bool) public _idToIncludeWorkshops;
-    mapping(uint256 => bool) public _idToIncludeWorkshopsAndPreParty;
-    mapping(uint256 => bool) public _idToIncludeHotel;
     mapping(uint256 => Colors) public _idToColors;
+    mapping(uint256 => string) public _idToTicketOption;
+
+    //TODO add mapping sold price
 
     function setDiscount(
         address buyer,
-        bool includeConf,
-        bool includeWorkshops,
-        bool includeWorkshopsAndPreParty,
+        string[] memory ticketDiscounts,
         uint256 amount
     ) public returns (bool) {
         require(msg.sender == owner, "only owner can add new discounts");
 
-        Discount memory discount = Discount(
-            includeConf,
-            includeWorkshops,
-            includeWorkshopsAndPreParty,
-            amount
-        );
+        Discount memory discount = Discount(ticketDiscounts, amount);
         emit LogDiscount(buyer, discount, "set discount buyer");
         settings.discounts[buyer] = discount;
         return true;
@@ -186,6 +204,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
         _idToCanceled[id] = canceled;
         emit LogTicketAction(id, canceled, "cancel ticket");
         return canceled;
+    }
+
+    function setTicketOption(string memory name, uint256 amount)
+        public
+        returns (bool)
+    {
+        require(msg.sender == owner, "only owner can set ticket options");
+
+        //emit LogDiscount(buyer, discount, "set discount buyer");
+        settings.ticketOptionPrices[name] = amount;
+        return true;
     }
 
     function setTicketSettings(
@@ -262,76 +291,31 @@ contract ETHDubaiTicket is ERC721URIStorage {
         emit LogResell(resellLog, "resell");
     }
 
-    function getPrice(
-        address sender,
-        bool includeWorkshops,
-        bool includeWorkshopsAndPreParty,
-        bool includeHotelExtra
-    ) public view returns (uint256) {
+    function getPrice(address sender, string memory ticketOption)
+        public
+        view
+        returns (uint256)
+    {
         Discount memory discount = settings.discounts[sender];
         uint256 amount = settings.discounts[sender].amount;
-        uint256 hotelAmount = 0;
         uint256 total = 0;
+        bool hasDiscount = false;
+        total = total + settings.ticketOptionPrices[ticketOption];
         if (amount > 0) {
-            uint256 confPrice = settings.ticketSettings.priceOneDay;
-            if (discount.includeConf) {
-                confPrice =
-                    settings.ticketSettings.priceOneDay -
-                    ((settings.ticketSettings.priceOneDay * amount) / 100);
-            }
-            if (includeHotelExtra) {
-                hotelAmount = 2 * settings.ticketSettings.priceHotel;
-            }
-
-            total = confPrice + hotelAmount;
-            if (includeWorkshops) {
-                uint256 twoDayPrice = settings.ticketSettings.priceTwoDays;
-                if (discount.includeWorkshops) {
-                    twoDayPrice =
-                        settings.ticketSettings.priceTwoDays -
-                        ((settings.ticketSettings.priceTwoDays * amount) / 100);
+            for (uint256 j = 0; j < discount.ticketOptions.length; j++) {
+                string memory a = discount.ticketOptions[j];
+                string memory b = ticketOption;
+                if (
+                    (keccak256(abi.encodePacked((a))) ==
+                        keccak256(abi.encodePacked((b))))
+                ) {
+                    hasDiscount = true;
                 }
-                if (includeHotelExtra) {
-                    hotelAmount = 3 * settings.ticketSettings.priceHotel;
-                }
-
-                total = twoDayPrice + hotelAmount;
             }
-            if (includeWorkshopsAndPreParty) {
-                uint256 threeDayPrice = settings.ticketSettings.priceThreeDays;
-                if (discount.includeWorkshopsAndPreParty) {
-                    threeDayPrice =
-                        settings.ticketSettings.priceThreeDays -
-                        ((settings.ticketSettings.priceThreeDays * amount) /
-                            100);
-                }
-                if (includeHotelExtra) {
-                    hotelAmount = 4 * settings.ticketSettings.priceHotel;
-                }
-
-                total = threeDayPrice + hotelAmount;
-            }
-        } else {
-            if (includeHotelExtra) {
-                hotelAmount = 2 * settings.ticketSettings.priceHotel;
-            }
-
-            total = settings.ticketSettings.priceOneDay + hotelAmount;
-
-            if (includeWorkshops) {
-                if (includeHotelExtra) {
-                    hotelAmount = 3 * settings.ticketSettings.priceHotel;
-                }
-
-                total = settings.ticketSettings.priceTwoDays + hotelAmount;
-            }
-            if (includeWorkshopsAndPreParty) {
-                if (includeHotelExtra) {
-                    hotelAmount = 4 * settings.ticketSettings.priceHotel;
-                }
-
-                total = settings.ticketSettings.priceThreeDays + hotelAmount;
-            }
+        }
+        require(total > 0, "Total can't be zero");
+        if (hasDiscount) {
+            total = total - ((total * amount) / 100);
         }
         /* if (amount == 0) {
             address devdao = 0xb3067e47d005f9A588162A710071d18098c93E04;
@@ -349,11 +333,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         address sender,
         uint256 value
     ) internal returns (uint256) {
-        require(
-            !(mintInfo.includeWorkshops &&
-                mintInfo.includeWorkshopsAndPreParty),
-            "Can't include both workshops and workshops and pre party!"
-        );
         console.log(22222);
         console.log("mm %s", value);
         console.log("email %s", mintInfo.attendeeInfo.email);
@@ -439,10 +418,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         _idToTicketResellable[id] = mintInfo.resellable;
         _idToScanned[id] = false;
         _idToCanceled[id] = false;
-        _idToIncludeWorkshops[id] = mintInfo.includeWorkshops;
-        _idToIncludeWorkshopsAndPreParty[id] = mintInfo
-            .includeWorkshopsAndPreParty;
-        _idToIncludeHotel[id] = mintInfo.includeHotelExtra;
+        _idToTicketOption[id] = mintInfo.ticketOption;
 
         MintLog memory mintLog = MintLog(
             discount,
@@ -450,7 +426,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             sender,
             total,
             id,
-            mintInfo.includeHotelExtra
+            mintInfo.ticketOption
         );
         emit LogMint(mintLog, "mintItem");
         return id;
@@ -467,12 +443,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         );
         uint256 total = 0;
         for (uint256 i = 0; i < mintInfos.length; i++) {
-            total += getPrice(
-                msg.sender,
-                mintInfos[i].includeWorkshops,
-                mintInfos[i].includeWorkshopsAndPreParty,
-                mintInfos[i].includeHotelExtra
-            );
+            total += getPrice(msg.sender, mintInfos[i].ticketOption);
         }
         require(msg.value >= total, "Not enough ETH sent; check price!");
 
@@ -491,17 +462,27 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string memory preEvent1;
         string memory preEvent2;
         string memory preEvent3;
-        if (_idToIncludeWorkshops[id]) {
+        if (
+            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
+                keccak256(abi.encodePacked(("workshops"))))
+        ) {
             preEvent1 = "Workshops";
-            if (_idToIncludeHotel[id]) {
-                preEvent2 = "Hotel";
-            }
-        } else if (_idToIncludeWorkshopsAndPreParty[id]) {
+        } else if (
+            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
+                keccak256(abi.encodePacked(("hotelWorkshops"))))
+        ) {
+            preEvent2 = "Hotel";
+        } else if (
+            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
+                keccak256(abi.encodePacked(("workshopsAndPreParty"))))
+        ) {
             preEvent1 = "Workshops";
             preEvent2 = "Preparties";
-            if (_idToIncludeHotel[id]) {
-                preEvent3 = "Hotel";
-            }
+        } else if (
+            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
+                keccak256(abi.encodePacked(("hotelWorkshopsAndPreParty"))))
+        ) {
+            preEvent3 = "Hotel";
         }
         string memory svg = string(
             abi.encodePacked(
@@ -569,6 +550,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
         return string(bstr);
     }
 
+    function compareStrings(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
+        return (keccak256(abi.encodePacked((a))) ==
+            keccak256(abi.encodePacked((b))));
+    }
+
     function tokenURI(uint256 id) public view override returns (string memory) {
         require(_exists(id), "not exist");
         string memory name = string(
@@ -579,14 +569,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         );
         console.log("svg %s", generateSVGofTokenById(id));
         string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
-        string memory hasWorkshops = "false";
-        string memory hasHotel = "false";
-        if (_idToIncludeWorkshops[id]) {
-            hasWorkshops = "true";
-        }
-        if (_idToIncludeHotel[id]) {
-            hasHotel = "true";
-        }
 
         return
             string(
@@ -601,10 +583,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
                                 description,
                                 '", "external_url":"https://www.ethdubaiconf.org/token/',
                                 id.toString(),
-                                '", "attributes": [{"trait_type": "workshops", "value": "',
-                                hasWorkshops,
-                                '"},{"trait_type": "hotel", "value": "',
-                                hasHotel,
+                                '", "attributes": [{"trait_type": "options", "value": "',
+                                _idToTicketOption[id],
                                 '"}], "owner":"',
                                 (uint160(ownerOf(id))).toHexString(20),
                                 '", "image": "data:image/svg+xml;base64,',
