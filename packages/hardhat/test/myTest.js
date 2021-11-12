@@ -49,21 +49,14 @@ describe("My Dapp", function () {
 
     describe("getPrice() 3 days with hotel", function () {
       it("Should return price with with discount", async function () {
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = true;
-        let includeHotelExtra = false;
-        let ticketOptions = ["hotelWorkshopsAndPreParty"];
+        let ticketOption = "hotelWorkshopsAndPreParty";
         const [owner, nonOwner] = await ethers.getSigners();
         const getTotal = async () => {
-          return await myContract
-            .connect(nonOwner)
-            .getPrice(
-              nonOwner.address,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-              ticketOptions
-            );
+          return await myContract.connect(nonOwner).getPrice(
+            nonOwner.address,
+
+            ticketOption
+          );
         };
         const total = await getTotal();
         expect(total.toString()).to.equal(
@@ -74,22 +67,13 @@ describe("My Dapp", function () {
 
     describe("getPrice() 3 days without Hotel", function () {
       it("Should return price with with discount", async function () {
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = true;
-        let includeHotelExtra = true;
-        let ticketOptions = ["workshopAndPreParty"];
+        let ticketOption = "workshopAndPreParty";
 
         const [owner, nonOwner] = await ethers.getSigners();
         const getTotal = async () => {
           return await myContract
             .connect(nonOwner)
-            .getPrice(
-              nonOwner.address,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-              ticketOptions
-            );
+            .getPrice(nonOwner.address, ticketOption);
         };
         const total = await getTotal();
         expect(total.toString()).to.equal(
@@ -100,22 +84,15 @@ describe("My Dapp", function () {
 
     describe("getPrice() 1 day without Hotel", function () {
       it("Should return price with with discount", async function () {
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = false;
-        let includeHotelExtra = false;
-        let ticketOptions = ["conference"];
+        let ticketOption = "conference";
 
         const [owner, nonOwner] = await ethers.getSigners();
         const getTotal = async () => {
-          return await myContract
-            .connect(nonOwner)
-            .getPrice(
-              nonOwner.address,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-              ticketOptions
-            );
+          return await myContract.connect(nonOwner).getPrice(
+            nonOwner.address,
+
+            ticketOption
+          );
         };
         const total = await getTotal();
         expect(total.toString()).to.equal(
@@ -126,21 +103,14 @@ describe("My Dapp", function () {
 
     describe("getPrice() 1 day with Hotel", function () {
       it("Should return price with with discount", async function () {
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = false;
-        let includeHotelExtra = true;
-        let ticketOptions = ["hotelConference"];
+        let ticketOption = "hotelConference";
         const [owner, nonOwner] = await ethers.getSigners();
         const getTotal = async () => {
-          return await myContract
-            .connect(nonOwner)
-            .getPrice(
-              nonOwner.address,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-              ticketOptions
-            );
+          return await myContract.connect(nonOwner).getPrice(
+            nonOwner.address,
+
+            ticketOption
+          );
         };
         const total = await getTotal();
         expect(total.toString()).to.equal(
@@ -237,9 +207,7 @@ describe("My Dapp", function () {
         isResellable: true,
         price: ethers.BigNumber.from("50"),
       };
-      let includeWorkshops = false;
-      let includeWorkshopsAndPreParty = true;
-      let includeHotelExtra = true;
+
       const [owner, nonOwner] = await ethers.getSigners();
       const nonOwnerAddress = nonOwner.address;
       await myContract.connect(nonOwner).mintItem(
@@ -248,9 +216,7 @@ describe("My Dapp", function () {
             attendeeInfo,
             ticketCode,
             resellable,
-            includeWorkshops,
-            includeWorkshopsAndPreParty,
-            includeHotelExtra,
+
             ticketOptions: ["workshopAndPreParty"],
           },
         ],
@@ -277,9 +243,7 @@ describe("My Dapp", function () {
           isResellable: true,
           price: ethers.BigNumber.from("50"),
         };
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = true;
-        let includeHotelExtra = true;
+
         const [owner, nonOwner] = await ethers.getSigners();
         const nonOwnerAddress = nonOwner.address;
         const mintAgain = async () => {
@@ -289,9 +253,7 @@ describe("My Dapp", function () {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
             ],
@@ -321,9 +283,7 @@ describe("My Dapp", function () {
           isResellable: true,
           price: ethers.BigNumber.from("50"),
         };
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = true;
-        let includeHotelExtra = true;
+
         const [owner, nonOwner] = await ethers.getSigners();
         const nonOwnerAddress = nonOwner.address;
         await myContract.setMaxMint(100);
@@ -334,9 +294,7 @@ describe("My Dapp", function () {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
             ],
@@ -348,9 +306,6 @@ describe("My Dapp", function () {
 
     describe("setDiscount()", function () {
       it("Should be able to set a discount", async function () {
-        let includeConf = true;
-        let includeWorkshops = true;
-        let includeWorkshopsAndPreParty = true;
         let amount = ethers.BigNumber.from("50");
 
         const [owner, nonOwner] = await ethers.getSigners();
@@ -368,9 +323,6 @@ describe("My Dapp", function () {
         const [owner, nonOwner] = await ethers.getSigners();
         const nonOwnerAddress = nonOwner.address;
         const nonOwnerSetDiscount = async () => {
-          let includeConf = true;
-          let includeWorkshops = true;
-          let includeWorkshopsAndPreParty = true;
           let amount = ethers.BigNumber.from("50");
 
           await myContract
@@ -402,9 +354,7 @@ describe("My Dapp", function () {
           isResellable: true,
           price: ethers.BigNumber.from("50"),
         };
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = true;
-        let includeHotelExtra = true;
+
         const [owner, nonOwner] = await ethers.getSigners();
         const nonOwnerAddress = nonOwner.address;
         await myContract.connect(nonOwner).mintItem(
@@ -413,9 +363,7 @@ describe("My Dapp", function () {
               attendeeInfo,
               ticketCode,
               resellable,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
+
               ticketOptions: ["workshopAndPreParty"],
             },
           ],
@@ -426,22 +374,16 @@ describe("My Dapp", function () {
 
     describe("getPrice() with discount", function () {
       it("Should return price with with discount", async function () {
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = true;
-        let includeHotelExtra = true;
-        let ticketOptions = ["workshopAndPreParty"];
+        let ticketOption = "workshopAndPreParty";
 
         const [owner, nonOwner] = await ethers.getSigners();
         const getTotal = async () => {
-          return await myContract
-            .connect(nonOwner)
-            .getPrice(
-              nonOwner.address,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
-              ticketOptions
-            );
+          return await myContract.connect(nonOwner).getPrice(
+            nonOwner.address,
+
+            incluticketOption,
+            ticketOption
+          );
         };
         const total = await getTotal();
         expect(total.toString()).to.equal(
@@ -469,9 +411,7 @@ describe("My Dapp", function () {
           isResellable: true,
           price: ethers.BigNumber.from("50"),
         };
-        let includeWorkshops = false;
-        let includeWorkshopsAndPreParty = false;
-        let includeHotelExtra = false;
+
         const [owner, nonOwner, nonOwner2] = await ethers.getSigners();
         const nonOwnerAddress = nonOwner.address;
         await myContract.connect(nonOwner2).mintItem(
@@ -480,9 +420,6 @@ describe("My Dapp", function () {
               attendeeInfo,
               ticketCode,
               resellable,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
 
               ticketOptions: ["workshopAndPreParty"],
             },
@@ -490,9 +427,6 @@ describe("My Dapp", function () {
               attendeeInfo,
               ticketCode,
               resellable,
-              includeWorkshops,
-              includeWorkshopsAndPreParty,
-              includeHotelExtra,
 
               ticketOptions: ["workshopAndPreParty"],
             },
@@ -555,9 +489,7 @@ describe("My Dapp", function () {
             isResellable: true,
             price: ethers.BigNumber.from("50"),
           };
-          let includeWorkshops = false;
-          let includeWorkshopsAndPreParty = false;
-          let includeHotelExtra = false;
+
           const [owner, nonOwner, nonOwner2] = await ethers.getSigners();
           const nonOwnerAddress = nonOwner.address;
           await myContract.connect(nonOwner2).mintItem(
@@ -566,180 +498,140 @@ describe("My Dapp", function () {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
-                includeWorkshops,
-                includeWorkshopsAndPreParty,
-                includeHotelExtra,
+
                 ticketOptions: ["workshopAndPreParty"],
               },
             ],
