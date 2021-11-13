@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./HexStrings.sol";
@@ -25,7 +27,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
     Settings public settings;
     event Log(address indexed sender, string message);
     event LogUint(uint256 indexed tokenId, string message);
-
+    event LogMintId(address indexed sender, uint256 id, string message);
     event LogDiscount(
         address indexed sender,
         Discount discount,
@@ -153,9 +155,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string ticketCode;
         string ticketOption;
         Resellable resellable;
-        bool includeWorkshops;
-        bool includeWorkshopsAndPreParty;
-        bool includeHotelExtra;
     }
 
     //this marks an item in IPFS as "forsale"
@@ -353,7 +352,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 blockhash(block.number + 1),
                 sender,
                 address(this),
-                "foo1"
+                mintInfo.attendeeInfo.email
             )
         );
         _idToColors[id].color1 =
@@ -366,7 +365,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 blockhash(block.number + 2),
                 sender,
                 address(this),
-                "foo2"
+                mintInfo.attendeeInfo.telegram
             )
         );
         _idToColors[id].color2 =
@@ -379,7 +378,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 blockhash(block.number + 3),
                 sender,
                 address(this),
-                "foo3"
+                mintInfo.attendeeInfo.fname
             )
         );
         _idToColors[id].color3 =
@@ -392,7 +391,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 blockhash(block.number + 4),
                 sender,
                 address(this),
-                "foo4"
+                mintInfo.attendeeInfo.lname
             )
         );
         _idToColors[id].color4 =
@@ -435,7 +434,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function mintItem(MintInfo[] memory mintInfos)
         public
         payable
-        returns (bool)
+        returns (string memory)
     {
         require(
             _tokenIds.current() < settings.maxMint,
@@ -446,12 +445,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
             total += getPrice(msg.sender, mintInfos[i].ticketOption);
         }
         require(msg.value >= total, "Not enough ETH sent; check price!");
-
+        string memory ids = "";
         for (uint256 i = 0; i < mintInfos.length; i++) {
-            processMintIntem(mintInfos[i], msg.sender, msg.value);
-        }
+            uint256 mintedId = processMintIntem(
+                mintInfos[i],
+                msg.sender,
+                msg.value
+            );
 
-        return true;
+            emit LogMintId(msg.sender, mintedId, "Minted Id");
+        }
+        return ids;
     }
 
     function generateSVGofTokenById(uint256 id)
@@ -460,7 +464,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         returns (string memory)
     {
         string memory preEvent1;
-        string memory preEvent2;
         string memory preEvent3;
         if (
             (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
@@ -471,30 +474,30 @@ contract ETHDubaiTicket is ERC721URIStorage {
             (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
                 keccak256(abi.encodePacked(("hotelWorkshops"))))
         ) {
-            preEvent2 = "Hotel";
+            preEvent3 = "Hotel";
         } else if (
             (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
                 keccak256(abi.encodePacked(("workshopsAndPreParty"))))
         ) {
-            preEvent1 = "Workshops";
-            preEvent2 = "Preparties";
+            preEvent1 = "Workshops && preparties";
         } else if (
             (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
                 keccak256(abi.encodePacked(("hotelWorkshopsAndPreParty"))))
         ) {
             preEvent3 = "Hotel";
         }
+        string memory idstr = uint2str(id);
         string memory svg = string(
             abi.encodePacked(
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
                 '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297">',
                 preEvent1,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584">',
-                preEvent2,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345">',
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345">',
                 preEvent3,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@',
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#',
+                idstr,
+                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@',
                 _idToAttendeeInfo[id].telegram,
                 '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
             )

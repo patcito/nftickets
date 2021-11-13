@@ -217,7 +217,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOptions: ["workshopAndPreParty"],
+            ticketOption: "workshopAndPreParty",
           },
         ],
         { value: ethers.utils.parseEther("3.8").toHexString() }
@@ -254,7 +254,7 @@ describe("My Dapp", function () {
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
             ],
             { value: ethers.utils.parseEther("3.8").toHexString() }
@@ -295,7 +295,7 @@ describe("My Dapp", function () {
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
             ],
             { value: ethers.utils.parseEther("3.8").toHexString() }
@@ -364,7 +364,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOptions: ["workshopAndPreParty"],
+              ticketOption: "workshopAndPreParty",
             },
           ],
           { value: ethers.utils.parseEther("0.1").toHexString() }
@@ -381,7 +381,6 @@ describe("My Dapp", function () {
           return await myContract.connect(nonOwner).getPrice(
             nonOwner.address,
 
-            incluticketOption,
             ticketOption
           );
         };
@@ -421,14 +420,14 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOptions: ["workshopAndPreParty"],
+              ticketOption: "workshopAndPreParty",
             },
             {
               attendeeInfo,
               ticketCode,
               resellable,
 
-              ticketOptions: ["workshopAndPreParty"],
+              ticketOption: "workshopAndPreParty",
             },
           ],
           { value: ethers.utils.parseEther("2.0").toHexString() }
@@ -448,7 +447,9 @@ describe("My Dapp", function () {
           const obj = JSON.parse(json);
           console.log(obj);
           const svg = Buffer.from(obj.image.substring(26), "base64").toString();
-          expect(svg).to.equal(svg);
+          expect(svg).to.equal(
+            '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#a1442d" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#431bdf" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#23f1fd" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#431bdf" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#05ff71" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#e04fe5" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@patcitotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+          );
         });
       });
 
@@ -465,8 +466,10 @@ describe("My Dapp", function () {
           const obj = JSON.parse(json);
           console.log(obj);
           const svg = Buffer.from(obj.image.substring(26), "base64").toString();
+          console.log("working", svg);
+
           expect(svg).to.equal(
-            '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#4f15b1" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#5eedc1" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#bb604e" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#5eedc1" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#7265ef" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#920e2b" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@patcitotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+            '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#733b17" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#30ed84" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#a63d85" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#30ed84" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#2f39b3" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#920e2b" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#3</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@patcitotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
           );
         });
       });
@@ -499,140 +502,140 @@ describe("My Dapp", function () {
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
               {
                 attendeeInfo,
                 ticketCode,
                 resellable,
 
-                ticketOptions: ["workshopAndPreParty"],
+                ticketOption: "workshopAndPreParty",
               },
             ],
             { value: ethers.utils.parseEther("4.0").toHexString() }
