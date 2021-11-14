@@ -1,19 +1,14 @@
 pragma experimental ABIEncoderV2;
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./HexStrings.sol";
 import "./ToColor.sol";
 import "base64-sol/base64.sol";
-
-//import "@openzeppelin/contracts/access/Ownable.sol";
-//learn more: https://docs.openzeppelin.com/contracts/3.x/erc721
 
 // GET LISTED ON OPENSEA: https://testnets.opensea.io/get-listed/step-two
 
@@ -24,66 +19,46 @@ contract ETHDubaiTicket is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     address payable public owner;
+    address public dao1;
+    address public dao2;
+    address public dao3;
+    uint256 public daoa;
     Settings public settings;
     event Log(address indexed sender, string message);
-    event LogUint(uint256 indexed tokenId, string message);
-    event LogMintId(address indexed sender, uint256 id, string message);
-    event LogDiscount(
-        address indexed sender,
-        Discount discount,
-        string message
-    );
-    event LogAttendeeInfo(
+    event Lint(uint256 indexed tokenId, string message);
+    event LMintId(address indexed sender, uint256 id, string message);
+    event LDiscount(address indexed sender, Discount discount, string message);
+    event LAttendeeInfo(
         uint256 indexed id,
         AttendeeInfo attendeeInfo,
         string message
     );
-    event LogTicketAction(uint256 indexed id, bool value, string message);
-    event LogResellable(
+    event LTicketAction(uint256 indexed id, bool value, string message);
+    event LResellable(
         uint256 indexed id,
         Resellable resellable,
         string message
     );
-    event LogTicketSettings(
+    event LTicketSettings(
         TicketSettings indexed ticketSettings,
         string message
     );
-    event LogMint(MintLog indexed mintLog, string message);
-    event LogResell(ResellLog indexed resellLog, string message);
+    event LMint(MintLog indexed mintLog, string message);
+    event LResell(ResellLog indexed resellLog, string message);
 
     constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
-        emit Log(msg.sender, "Contract created");
+        emit Log(msg.sender, "created");
         owner = payable(msg.sender);
         settings.maxMint = 1;
 
-        settings.ticketSettings = TicketSettings(
-            "early bird",
-            0.1 ether,
-            2 ether,
-            0.2 ether,
-            0.1 ether
-        );
-        /*settings.ticketOptions[0] = 0.1 ether;
-        settings.ticketOptions[1] = 2 ether;
-        settings.ticketOptions[2] = 0.2 ether;
-        settings.ticketOptions[3] = 0.05 ether;
-        settings.ticketOptions[4] = 0.08 ether;
-        settings.ticketOptions[5] = 0.2 ether;
-        settings.ticketOptions[6] = 2.15 ether;
-        settings.ticketOptions[7] = 0.4 ether;
-        settings.ticketOptions[8] = 0.45 ether;
-*/
+        settings.ticketSettings = TicketSettings("early bird");
+
         settings.ticketOptionPrices["conference"] = 0.1 ether;
         settings.ticketOptionPrices["workshop"] = 2 ether;
         settings.ticketOptionPrices["workshopAndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["hotel"] = 0.05 ether;
-        settings.ticketOptionPrices["safari"] = 0.08 ether;
         settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
         settings.ticketOptionPrices["hotelWorkshops"] = 2.15 ether;
         settings.ticketOptionPrices["hotelWorkshopsAndPreParty"] = 0.4 ether;
-        settings.ticketOptionPrices["hotelSafari"] = 0.45 ether;
-
-        //for (uint256 i = 0; i < assetsForSale.length; i++) {
     }
 
     struct Resellable {
@@ -96,15 +71,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
         uint256 amount;
     }
 
-    //TODO: add soldOutOneDay
-    //TODO: add soldOutTwoDay
-    //TODO: add soldOutThreeDay
     struct TicketSettings {
         string name;
-        uint256 priceOneDay;
-        uint256 priceTwoDays;
-        uint256 priceThreeDays;
-        uint256 priceHotel;
     }
 
     struct Settings {
@@ -154,13 +122,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
         AttendeeInfo attendeeInfo;
         string ticketCode;
         string ticketOption;
+        string specialStatus;
         Resellable resellable;
     }
 
-    //this marks an item in IPFS as "forsale"
-    mapping(bytes32 => bool) public forSale;
-    //this lets you look up a token by the uri (assuming there is only one of each uri for now)
-    mapping(bytes32 => uint256) public uriToTokenId;
     mapping(uint256 => AttendeeInfo) public _idToAttendeeInfo;
     mapping(uint256 => string) public _idToTicketCode;
     mapping(uint256 => Resellable) public _idToTicketResellable;
@@ -168,68 +133,68 @@ contract ETHDubaiTicket is ERC721URIStorage {
     mapping(uint256 => bool) public _idToCanceled;
     mapping(uint256 => Colors) public _idToColors;
     mapping(uint256 => string) public _idToTicketOption;
-
-    //TODO add mapping sold price
+    mapping(uint256 => string) public _idToSpecialStatus;
 
     function setDiscount(
         address buyer,
-        string[] memory ticketDiscounts,
+        string[] memory discounts,
         uint256 amount
     ) public returns (bool) {
-        require(msg.sender == owner, "only owner can add new discounts");
+        require(msg.sender == owner, "only owner");
 
-        Discount memory discount = Discount(ticketDiscounts, amount);
-        emit LogDiscount(buyer, discount, "set discount buyer");
-        settings.discounts[buyer] = discount;
+        Discount memory d = Discount(discounts, amount);
+        emit LDiscount(buyer, d, "set discount buyer");
+        settings.discounts[buyer] = d;
         return true;
     }
 
-    function setMaxMint(uint256 newMaxMint) public returns (uint256) {
-        require(msg.sender == owner, "only owner can mark as scanned");
-        settings.maxMint = newMaxMint;
-        emit LogUint(newMaxMint, "setMaxMint");
-        return newMaxMint;
+    function setMaxMint(uint256 max) public returns (uint256) {
+        require(msg.sender == owner, "only owner");
+        settings.maxMint = max;
+        emit Lint(max, "setMaxMint");
+        return max;
     }
 
-    function markAsScanned(uint256 id, bool scanned) public returns (bool) {
-        require(msg.sender == owner, "only owner can mark as scanned");
-        _idToScanned[id] = scanned;
-        emit LogTicketAction(id, scanned, "scan ticket");
-        return scanned;
-    }
-
-    function cancelTicket(uint256 id, bool canceled) public returns (bool) {
-        require(msg.sender == owner, "only owner can cancel ticket");
+    function markAsScannedCanceld(
+        uint256 id,
+        bool scan,
+        bool canceled
+    ) public returns (bool) {
+        require(msg.sender == owner, "only owner");
+        _idToScanned[id] = scan;
         _idToCanceled[id] = canceled;
-        emit LogTicketAction(id, canceled, "cancel ticket");
-        return canceled;
+        emit LTicketAction(id, scan, "scan");
+        emit LTicketAction(id, canceled, "cancel");
+        return scan;
+    }
+
+    function setDaos(
+        address d1,
+        address d2,
+        address d3,
+        uint256 a
+    ) public returns (bool) {
+        require(msg.sender == owner, "only owner");
+        dao1 = d1;
+        dao2 = d2;
+        dao3 = d3;
+        daoa = a;
+        return true;
     }
 
     function setTicketOption(string memory name, uint256 amount)
         public
         returns (bool)
     {
-        require(msg.sender == owner, "only owner can set ticket options");
-
-        //emit LogDiscount(buyer, discount, "set discount buyer");
+        require(msg.sender == owner, "only owner");
         settings.ticketOptionPrices[name] = amount;
         return true;
     }
 
-    function setTicketSettings(
-        string memory name,
-        uint256 pOneDay,
-        uint256 pTwoDays,
-        uint256 pThreeDays,
-        uint256 pHotel
-    ) public returns (bool) {
-        require(msg.sender == owner, "only owner can set ticket settings");
+    function setTicketSettings(string memory name) public returns (bool) {
+        require(msg.sender == owner, "only owner");
         settings.ticketSettings.name = name;
-        settings.ticketSettings.priceOneDay = pOneDay;
-        settings.ticketSettings.priceTwoDays = pTwoDays;
-        settings.ticketSettings.priceThreeDays = pThreeDays;
-        settings.ticketSettings.priceHotel = pHotel;
-        emit LogTicketSettings(settings.ticketSettings, "setTicketSettings");
+        emit LTicketSettings(settings.ticketSettings, "setTicketSettings");
         return true;
     }
 
@@ -238,13 +203,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bool isResellable,
         uint256 price
     ) public returns (bool) {
-        require(
-            msg.sender == owner || msg.sender == this.ownerOf(id),
-            "only contract owner or ticket owner can reset resell status"
-        );
+        require(msg.sender == this.ownerOf(id), "only owner");
         Resellable memory resellable = Resellable(isResellable, price);
         _idToTicketResellable[id] = resellable;
-        emit LogResellable(id, resellable, "setResellable");
+        emit LResellable(id, resellable, "setResellable");
         return true;
     }
 
@@ -254,40 +216,32 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         require(
             msg.sender == owner || msg.sender == this.ownerOf(id),
-            "only contract owner or ticket owner can reset resell status"
+            "only contract or ticket owner"
         );
         _idToAttendeeInfo[id] = attendeeInfo;
-        emit LogAttendeeInfo(id, attendeeInfo, "updateAttendeeInfo");
+        emit LAttendeeInfo(id, attendeeInfo, "updateAttendeeInfo");
         return true;
     }
 
-    function resell(
-        address payable from,
-        address to,
-        uint256 tokenId
-    ) public payable virtual {
-        //solhint-disable-next-line max-line-length
-        //        require(
-        //          _isApprovedOrOwner(_msgSender(), tokenId),
-        //        "ERC721: transfer caller is not owner nor approved"
-        //  );
+    function resell(uint256 tokenId) public payable virtual {
         Resellable memory resellable = _idToTicketResellable[tokenId];
-        require(resellable.isResellable, "Ticket is not resellable!");
-        require(msg.value >= resellable.price, "Price below selling price");
+        require(resellable.isResellable, "not for sale");
+        require(msg.value >= resellable.price, "price too low");
         uint256 amount = msg.value;
-        uint256 coordinapeAmount = amount / 10;
-        uint256 resellerAmount = amount - coordinapeAmount - 10**16;
-        address payable coordinape = payable(
-            address(0x579E8e014F5B2c6D7a3373fb840F8DaFeacBfae1)
+        uint256 fee = amount / 50;
+        uint256 resellerAmount = amount - fee;
+        address payable reseller = payable(address(ownerOf(tokenId)));
+        reseller.transfer(resellerAmount);
+        _transfer(ownerOf(tokenId), msg.sender, tokenId);
+        resellable.isResellable = false;
+        _idToTicketResellable[tokenId] = resellable;
+        ResellLog memory resellL = ResellLog(
+            ownerOf(tokenId),
+            msg.sender,
+            tokenId,
+            amount
         );
-
-        coordinape.transfer(coordinapeAmount);
-        from.transfer(resellerAmount);
-        _transfer(from, to, tokenId);
-
-        ResellLog memory resellLog = ResellLog(from, to, tokenId, amount);
-
-        emit LogResell(resellLog, "resell");
+        emit LResell(resellL, "resell");
     }
 
     function getPrice(address sender, string memory ticketOption)
@@ -311,106 +265,106 @@ contract ETHDubaiTicket is ERC721URIStorage {
                     hasDiscount = true;
                 }
             }
+        } else {
+            address z = 0x0000000000000000000000000000000000000000;
+            uint256 b = 0;
+            if (dao1 != z) {
+                ERC721 token = ERC721(dao1);
+                b = token.balanceOf(msg.sender);
+                if (b > 0) amount = daoa;
+            }
+            if (amount == 0 && dao2 != z) {
+                ERC721 token = ERC721(dao2);
+                b = token.balanceOf(msg.sender);
+                if (b > 0) amount = daoa;
+            }
+
+            if (amount == 0 && dao3 != z) {
+                ERC721 token = ERC721(dao3);
+                b = token.balanceOf(msg.sender);
+                if (b > 0) amount = daoa;
+            }
         }
-        require(total > 0, "Total can't be zero");
+        require(total > 0, "Total can't be 0");
         if (hasDiscount) {
             total = total - ((total * amount) / 100);
         }
-        /* if (amount == 0) {
-            address devdao = 0xb3067e47d005f9A588162A710071d18098c93E04;
-            bool ddBalance = devdao.call(
-                bytes4(sha3("balanceOf(address)")),
-                sender
-            );
-        }*/
-        console.log("total.sol", total);
+
         return total;
     }
 
-    function processMintIntem(
-        MintInfo memory mintInfo,
+    function genColor(bytes32 pr) internal pure returns (bytes3) {
+        bytes3 color = bytes2(pr[0]) |
+            (bytes2(pr[1]) >> 8) |
+            (bytes3(pr[2]) >> 16);
+        return color;
+    }
+
+    function genPredictable(
         address sender,
-        uint256 value
-    ) internal returns (uint256) {
-        console.log(22222);
-        console.log("mm %s", value);
-        console.log("email %s", mintInfo.attendeeInfo.email);
-        console.log(33333);
+        address that,
+        bytes32 blockNum,
+        string memory attendeeProp
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(abi.encodePacked(blockNum, sender, that, attendeeProp));
+    }
+
+    function processMintIntem(MintInfo memory mintInfo, address sender)
+        internal
+        returns (uint256)
+    {
         uint256 total;
         Discount memory discount = settings.discounts[sender];
-
-        //console.log("urihash", uriHash);
-
-        //make sure they are only minting something that is marked "forsale"
 
         _tokenIds.increment();
 
         uint256 id = _tokenIds.current();
         _mint(sender, id);
-        bytes32 predictableRandom1 = keccak256(
-            abi.encodePacked(
-                blockhash(block.number + 1),
-                sender,
-                address(this),
-                mintInfo.attendeeInfo.email
-            )
+        bytes32 predictableRandom1 = genPredictable(
+            sender,
+            address(this),
+            blockhash(block.number + 1),
+            mintInfo.attendeeInfo.email
         );
-        _idToColors[id].color1 =
-            bytes2(predictableRandom1[0]) |
-            (bytes2(predictableRandom1[1]) >> 8) |
-            (bytes3(predictableRandom1[2]) >> 16);
 
-        bytes32 predictableRandom2 = keccak256(
-            abi.encodePacked(
-                blockhash(block.number + 2),
-                sender,
-                address(this),
-                mintInfo.attendeeInfo.telegram
-            )
-        );
-        _idToColors[id].color2 =
-            bytes2(predictableRandom2[0]) |
-            (bytes2(predictableRandom2[1]) >> 8) |
-            (bytes3(predictableRandom2[2]) >> 16);
+        _idToColors[id].color1 = genColor(predictableRandom1);
 
-        bytes32 predictableRandom3 = keccak256(
-            abi.encodePacked(
-                blockhash(block.number + 3),
-                sender,
-                address(this),
-                mintInfo.attendeeInfo.fname
-            )
+        bytes32 predictableRandom2 = genPredictable(
+            sender,
+            address(this),
+            blockhash(block.number + 2),
+            mintInfo.attendeeInfo.telegram
         );
-        _idToColors[id].color3 =
-            bytes2(predictableRandom3[0]) |
-            (bytes2(predictableRandom3[1]) >> 8) |
-            (bytes3(predictableRandom3[2]) >> 16);
 
-        bytes32 predictableRandom4 = keccak256(
-            abi.encodePacked(
-                blockhash(block.number + 4),
-                sender,
-                address(this),
-                mintInfo.attendeeInfo.lname
-            )
-        );
-        _idToColors[id].color4 =
-            bytes2(predictableRandom4[0]) |
-            (bytes2(predictableRandom4[1]) >> 8) |
-            (bytes3(predictableRandom4[2]) >> 16);
+        _idToColors[id].color2 = genColor(predictableRandom2);
 
-        bytes32 predictableRandom5 = keccak256(
-            abi.encodePacked(
-                blockhash(block.number + 50),
-                sender,
-                address(this),
-                "foo5"
-            )
+        bytes32 predictableRandom3 = genPredictable(
+            sender,
+            address(this),
+            blockhash(block.number + 3),
+            mintInfo.attendeeInfo.fname
         );
-        _idToColors[id].color5 =
-            bytes2(predictableRandom5[0]) |
-            (bytes2(predictableRandom5[1]) >> 8) |
-            (bytes3(predictableRandom5[2]) >> 16);
+
+        _idToColors[id].color3 = genColor(predictableRandom3);
+
+        bytes32 predictableRandom4 = genPredictable(
+            sender,
+            address(this),
+            blockhash(block.number + 4),
+            mintInfo.attendeeInfo.lname
+        );
+
+        _idToColors[id].color4 = genColor(predictableRandom4);
+
+        bytes32 predictableRandom5 = genPredictable(
+            sender,
+            address(this),
+            blockhash(block.number + 50),
+            "foo5"
+        );
+
+        _idToColors[id].color5 = genColor(predictableRandom5);
 
         _idToAttendeeInfo[id] = mintInfo.attendeeInfo;
         _idToTicketCode[id] = mintInfo.ticketCode;
@@ -427,7 +381,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             id,
             mintInfo.ticketOption
         );
-        emit LogMint(mintLog, "mintItem");
+        emit LMint(mintLog, "mintItem");
         return id;
     }
 
@@ -436,26 +390,34 @@ contract ETHDubaiTicket is ERC721URIStorage {
         payable
         returns (string memory)
     {
-        require(
-            _tokenIds.current() < settings.maxMint,
-            "sorry, we're sold out!"
-        );
+        require(_tokenIds.current() < settings.maxMint, "sold out");
         uint256 total = 0;
         for (uint256 i = 0; i < mintInfos.length; i++) {
             total += getPrice(msg.sender, mintInfos[i].ticketOption);
         }
-        require(msg.value >= total, "Not enough ETH sent; check price!");
+        require(msg.value >= total, "price too low");
         string memory ids = "";
         for (uint256 i = 0; i < mintInfos.length; i++) {
-            uint256 mintedId = processMintIntem(
-                mintInfos[i],
-                msg.sender,
-                msg.value
+            require(
+                keccak256(abi.encodePacked(mintInfos[i].specialStatus)) ==
+                    keccak256(abi.encodePacked("")) ||
+                    msg.sender == owner,
+                "only ownerus"
             );
+            uint256 mintedId = processMintIntem(mintInfos[i], msg.sender);
 
-            emit LogMintId(msg.sender, mintedId, "Minted Id");
+            emit LMintId(msg.sender, mintedId, "Minted Id");
         }
         return ids;
+    }
+
+    function cmpStr(string memory idopt, string memory opt)
+        internal
+        pure
+        returns (bool)
+    {
+        return (keccak256(abi.encodePacked((idopt))) ==
+            keccak256(abi.encodePacked((opt))));
     }
 
     function generateSVGofTokenById(uint256 id)
@@ -465,27 +427,20 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         string memory preEvent1;
         string memory preEvent3;
-        if (
-            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
-                keccak256(abi.encodePacked(("workshops"))))
-        ) {
+        if (cmpStr(_idToTicketOption[id], "workshops")) {
             preEvent1 = "Workshops";
-        } else if (
-            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
-                keccak256(abi.encodePacked(("hotelWorkshops"))))
-        ) {
+        } else if (cmpStr(_idToTicketOption[id], "hotelWorkshops")) {
             preEvent3 = "Hotel";
-        } else if (
-            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
-                keccak256(abi.encodePacked(("workshopsAndPreParty"))))
-        ) {
+        } else if (cmpStr(_idToTicketOption[id], "workshopsAndPreParty")) {
             preEvent1 = "Workshops && preparties";
-        } else if (
-            (keccak256(abi.encodePacked((_idToTicketOption[id]))) ==
-                keccak256(abi.encodePacked(("hotelWorkshopsAndPreParty"))))
-        ) {
+        } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
             preEvent3 = "Hotel";
         }
+        if (cmpStr(_idToTicketOption[id], "")) {
+            preEvent1 = _idToSpecialStatus[id];
+            preEvent3 = "";
+        }
+
         string memory idstr = uint2str(id);
         string memory svg = string(
             abi.encodePacked(
@@ -506,7 +461,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         return svg;
     }
 
-    // Visibility is `public` to enable it being called by other contracts for composition.
     function renderTokenById(uint256 id) public view returns (string memory) {
         string memory render = string(
             abi.encodePacked(
@@ -567,10 +521,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string memory name = string(
             abi.encodePacked("ETHDubai Ticket #", id.toString())
         );
-        string memory description = string(
-            abi.encodePacked("This is a ticket to ETHDubai conference 2021.")
+        string memory dsc = string(
+            abi.encodePacked("Ticket to ETHDubai conference 2021.")
         );
-        console.log("svg %s", generateSVGofTokenById(id));
         string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
 
         return
@@ -583,7 +536,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                                 '{"name":"',
                                 name,
                                 '", "description":"',
-                                description,
+                                dsc,
                                 '", "external_url":"https://www.ethdubaiconf.org/token/',
                                 id.toString(),
                                 '", "attributes": [{"trait_type": "options", "value": "',
@@ -600,15 +553,11 @@ contract ETHDubaiTicket is ERC721URIStorage {
             );
     }
 
-    // Function to withdraw all Ether from this contract.
     function withdraw() public {
-        // get the amount of Ether stored in this contract
         uint256 amount = address(this).balance;
 
-        // send all Ether to owner
-        // Owner can receive Ether since the address of owner is payable
-        (bool success, ) = owner.call{value: amount}("");
-        require(success, "Failed to send Ether");
-        emit LogUint(amount, "withdraw");
+        (bool ok, ) = owner.call{value: amount}("");
+        require(ok, "Failed");
+        emit Lint(amount, "withdraw");
     }
 }
