@@ -2,7 +2,6 @@ pragma experimental ABIEncoderV2;
 pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -286,7 +285,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             }
         }
         require(total > 0, "Total can't be 0");
-        if (hasDiscount) {
+        if (hasDiscount || amount > 0) {
             total = total - ((total * amount) / 100);
         }
 
@@ -385,16 +384,22 @@ contract ETHDubaiTicket is ERC721URIStorage {
         return id;
     }
 
+    function totalPrice(MintInfo[] memory mIs) public view returns (uint256) {
+        uint256 t = 0;
+        for (uint256 i = 0; i < mIs.length; i++) {
+            t += getPrice(msg.sender, mIs[i].ticketOption);
+        }
+        return t;
+    }
+
     function mintItem(MintInfo[] memory mintInfos)
         public
         payable
         returns (string memory)
     {
         require(_tokenIds.current() < settings.maxMint, "sold out");
-        uint256 total = 0;
-        for (uint256 i = 0; i < mintInfos.length; i++) {
-            total += getPrice(msg.sender, mintInfos[i].ticketOption);
-        }
+        uint256 total = totalPrice(mintInfos);
+
         require(msg.value >= total, "price too low");
         string memory ids = "";
         for (uint256 i = 0; i < mintInfos.length; i++) {
@@ -402,7 +407,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 keccak256(abi.encodePacked(mintInfos[i].specialStatus)) ==
                     keccak256(abi.encodePacked("")) ||
                     msg.sender == owner,
-                "only ownerus"
+                "only owner"
             );
             uint256 mintedId = processMintIntem(mintInfos[i], msg.sender);
 
@@ -446,15 +451,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297">',
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="182.54297">',
                 preEvent1,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345">',
+                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="222.82584"></text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="266.28345">',
                 preEvent3,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#',
+                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="87.164688">#',
                 idstr,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@',
+                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="315.82971">@',
                 _idToAttendeeInfo[id].telegram,
-                '</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
             )
         );
 

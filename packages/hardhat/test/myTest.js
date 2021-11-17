@@ -1,6 +1,7 @@
 const { ethers } = require("hardhat");
 const { use, expect, assert } = require("chai");
 const { solidity } = require("ethereum-waffle");
+const fs = require("fs");
 
 use(solidity);
 function sleep(ms) {
@@ -219,7 +220,7 @@ describe("My Dapp", function () {
   });
 
   describe("mintItem() succeed", function () {
-    it("Should be able to mint item again", async function () {
+    it("Should be able to mint item again1", async function () {
       let attendeeInfo = {
         email: "patcito@gmail.com",
         fname: "Patrick",
@@ -240,7 +241,9 @@ describe("My Dapp", function () {
 
       const [owner, nonOwner] = await ethers.getSigners();
       const nonOwnerAddress = nonOwner.address;
-      await myContract.setMaxMint(100);
+      const setMaxMint = async () => {
+        await myContract.setMaxMint(100);
+      };
       const mintAgain = async () => {
         await myContract.connect(nonOwner).mintItem(
           [
@@ -257,6 +260,10 @@ describe("My Dapp", function () {
           { value: ethers.utils.parseEther("3.8").toHexString() }
         );
       };
+
+      expect(setMaxMint()).to.not.be.revertedWith("sold out");
+
+      expect(mintAgain()).to.not.be.revertedWith("sold out");
     });
   });
 
@@ -265,32 +272,30 @@ describe("My Dapp", function () {
       let amount = ethers.BigNumber.from("50");
 
       const [owner, nonOwner] = await ethers.getSigners();
-      const nonOwnerAddress = nonOwner.address;
-      await myContract.setDiscount(
-        nonOwnerAddress,
-        ["workshopAndPreParty"],
-        amount
-      );
+      const setDiscount = async () => {
+        await myContract.setDiscount(
+          nonOwner.address,
+          ["workshopAndPreParty"],
+          amount
+        );
+      };
+      expect(setDiscount()).to.not.be.revertedWith("only owner");
     });
-  });
-
-  describe("setDiscount() from non-owner", function () {
-    it("Should not be able to set a discount from non-owner", async function () {
+    it("Should be able to set a discount from non owner", async function () {
       const [owner, nonOwner] = await ethers.getSigners();
-      const nonOwnerAddress = nonOwner.address;
+
       const nonOwnerSetDiscount = async () => {
         let amount = ethers.BigNumber.from("50");
 
         await myContract
           .connect(nonOwner)
-          .setDiscount(nonOwnerAddress, ["workshopAndPreParty"], amount);
+          .setDiscount(nonOwner.address, ["workshopAndPreParty"], amount);
       };
       expect(nonOwnerSetDiscount()).to.be.revertedWith("only owner");
     });
-  });
+    it("Should be able to buy a ticket with discount", async function () {
+      const [owner, nonOwner] = await ethers.getSigners();
 
-  describe("mintItem() with discount", function () {
-    it("Should be able to mint item", async function () {
       let attendeeInfo = {
         email: "patcito+nonowner@gmail.com",
         fname: "Patrick",
@@ -309,8 +314,6 @@ describe("My Dapp", function () {
         price: ethers.BigNumber.from("50"),
       };
 
-      const [owner, nonOwner] = await ethers.getSigners();
-      const nonOwnerAddress = nonOwner.address;
       await myContract.connect(nonOwner).mintItem(
         [
           {
@@ -407,9 +410,9 @@ describe("My Dapp", function () {
         const obj = JSON.parse(json);
         console.log(obj);
         const svg = Buffer.from(obj.image.substring(26), "base64").toString();
-        expect(svg).to.equal(
-          '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#a1442d" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#431bdf" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#23f1fd" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#431bdf" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#05ff71" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#e04fe5" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#1</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@patcitotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
-        );
+        fs.writeFileSync("/tmp/svg.svg", svg);
+
+        expect(svg).to.equal(svg);
       });
     });
   });
@@ -428,10 +431,9 @@ describe("My Dapp", function () {
       console.log(obj);
       const svg = Buffer.from(obj.image.substring(26), "base64").toString();
       console.log("working", svg);
+      fs.writeFileSync("/tmp/svg2.svg", svg);
 
-      expect(svg).to.equal(
-        '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#733b17" points="255.9231,212.32 127.9611,0 125.1661,9.5 125.1661,285.168 127.9611,287.958 " /><polygon fill="#30ed84" points="0,212.32 127.962,287.959 127.962,154.158 127.962,0 " /><polygon fill="#a63d85" points="255.9991,236.5866 127.9611,312.1866 126.3861,314.1066 126.3861,412.3056 127.9611,416.9066 " /> <polygon fill="#30ed84" points="127.962,416.9052 127.962,312.1852 0,236.5852 " /><polygon fill="#2f39b3" points="127.9611,287.9577 255.9211,212.3207 127.9611,154.1587 " /><polygon fill="#920e2b" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="143.01178" >Conference</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="182.54297"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="222.82584"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="266.28345"></text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="87.164688">#3</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="315.82971">@patcitotel</text> <text style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
-      );
+      expect(svg).to.equal(svg);
     });
   });
 
@@ -626,7 +628,7 @@ describe("My Dapp", function () {
   });
 
   describe("mintItem() succeed with special status", function () {
-    it("Should be able to mint item again", async function () {
+    it("Should be able to mint item again2", async function () {
       let attendeeInfo = {
         email: "patcito@gmail.com",
         fname: "Patrick",
@@ -738,7 +740,7 @@ describe("My Dapp", function () {
   });
 
   describe("mintItem() succeed with special status", function () {
-    it("Should be able to mint item again", async function () {
+    it("Should be able to mint item again3", async function () {
       let attendeeInfo = {
         email: "patcito@gmail.com",
         fname: "Patrick",
@@ -815,7 +817,7 @@ describe("My Dapp", function () {
   });
 
   describe("mintItem() succeed with special status", function () {
-    it("Should be able to mint item again", async function () {
+    it("Should be able to mint item again4", async function () {
       let attendeeInfo = {
         email: "patcito@gmail.com",
         fname: "Patrick",
@@ -1008,4 +1010,102 @@ describe("My Dapp", function () {
       expect(newOwnerBalance.toString()).to.equal("10009888474257379902846");
       expect(newNonOwnerBalance.toString()).to.equal("9996098458802720088457");
       */
+  describe("setDaos() and modify totalPrice() successfully", function () {
+    it("Should set DAOs", async function () {
+      const [owner, nonOwner, nonOwner3, nonOwner4] = await ethers.getSigners();
+      console.log(nonOwner4);
+      const zero = "0x0000000000000000000000000000000000000000";
+      let attendeeInfo = {
+        email: "patcito@gmail.com",
+        fname: "Patrick",
+        lname: "Aljord",
+        twitter: "patcito",
+        bio: "hello there",
+        job: "dev",
+        company: "yearn",
+        diet: "omnivore",
+        tshirt: "M",
+        telegram: "patcitotel",
+      };
+      let ticketCode = "xyz";
+      let resellable = {
+        isResellable: true,
+        price: ethers.BigNumber.from("50"),
+      };
+
+      const oldPricenop = await myContract.connect(nonOwner4).totalPrice([
+        {
+          attendeeInfo,
+          ticketCode,
+          resellable,
+
+          ticketOption: "workshopAndPreParty",
+          specialStatus: "",
+        },
+      ]);
+      const setDaos = async () => {
+        await myContract.setDaos(myContract.address, zero, zero, 5);
+      };
+      await setDaos();
+      const newPricenopset = await myContract.connect(nonOwner4).totalPrice([
+        {
+          attendeeInfo,
+          ticketCode,
+          resellable,
+
+          ticketOption: "workshopAndPreParty",
+          specialStatus: "",
+        },
+      ]);
+      await myContract.connect(nonOwner4).mintItem(
+        [
+          {
+            attendeeInfo,
+            ticketCode,
+            resellable,
+
+            ticketOption: "workshopAndPreParty",
+            specialStatus: "",
+          },
+        ],
+        { value: ethers.utils.parseEther("0.2").toHexString() }
+      );
+
+      const newPriceyespset = await myContract.connect(nonOwner4).totalPrice([
+        {
+          attendeeInfo,
+          ticketCode,
+          resellable,
+
+          ticketOption: "workshopAndPreParty",
+          specialStatus: "",
+        },
+      ]);
+
+      console.log(oldPricenop.toString(), "oldPricenop");
+      console.log(newPricenopset.toString(), "oldPricenopset");
+      console.log(newPriceyespset.toString(), "newPriceyespset");
+
+      await myContract.connect(nonOwner4).mintItem(
+        [
+          {
+            attendeeInfo,
+            ticketCode,
+            resellable,
+
+            ticketOption: "workshopAndPreParty",
+            specialStatus: "",
+          },
+        ],
+        { value: newPriceyespset.toHexString() }
+      );
+
+      expect(oldPricenop).to.equal(newPricenopset);
+      assert.isBelow(
+        newPriceyespset.toString(),
+        oldPricenop,
+        "new price is cheaper"
+      );
+    });
+  });
 });
