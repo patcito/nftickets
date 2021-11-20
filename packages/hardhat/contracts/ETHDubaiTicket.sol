@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./HexStrings.sol";
@@ -22,6 +23,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
     address public dao2;
     address public dao3;
     uint256 public daoa;
+    ERC20 public erc20;
     Settings public settings;
     event Log(address indexed sender, string message);
     event Lint(uint256 indexed tokenId, string message);
@@ -49,6 +51,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
         emit Log(msg.sender, "created");
         owner = payable(msg.sender);
         settings.maxMint = 1;
+
+        erc20 = ERC20(0x6244D7f9245ad590490338db2fbEd815c2358034);
 
         settings.ticketSettings = TicketSettings("early bird");
 
@@ -190,9 +194,13 @@ contract ETHDubaiTicket is ERC721URIStorage {
         return true;
     }
 
-    function setTicketSettings(string memory name) public returns (bool) {
+    function setTicketSettings(string memory name, address e2)
+        public
+        returns (bool)
+    {
         require(msg.sender == owner, "only owner");
         settings.ticketSettings.name = name;
+        erc20 = ERC20(e2);
         emit LTicketSettings(settings.ticketSettings, "setTicketSettings");
         return true;
     }
@@ -225,12 +233,14 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function resell(uint256 tokenId) public payable virtual {
         Resellable memory resellable = _idToTicketResellable[tokenId];
         require(resellable.isResellable, "not for sale");
-        require(msg.value >= resellable.price, "price too low");
-        uint256 amount = msg.value;
-        uint256 fee = amount / 50;
+
+        uint256 amount = resellable.price;
+        uint256 fee = amount / 20;
         uint256 resellerAmount = amount - fee;
         address payable reseller = payable(address(ownerOf(tokenId)));
-        reseller.transfer(resellerAmount);
+        require(erc20.transferFrom(msg.sender, reseller, resellerAmount));
+        require(erc20.transferFrom(msg.sender, address(this), fee));
+
         _transfer(ownerOf(tokenId), msg.sender, tokenId);
         resellable.isResellable = false;
         _idToTicketResellable[tokenId] = resellable;
@@ -400,7 +410,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
         require(_tokenIds.current() < settings.maxMint, "sold out");
         uint256 total = totalPrice(mintInfos);
 
-        require(msg.value >= total, "price too low");
+        //        require(msg.value >= total, "price too low");
+        require(
+            erc20.transferFrom(msg.sender, address(this), total),
+            "transferFrom fail"
+        );
+
         string memory ids = "";
         for (uint256 i = 0; i < mintInfos.length; i++) {
             require(
@@ -451,15 +466,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="182.54297">',
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
                 preEvent1,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="222.82584"></text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="266.28345">',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="222"></text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="266.28345">',
                 preEvent3,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="87.164688">#',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
                 idstr,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="315.82971">@',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="315">@',
                 _idToAttendeeInfo[id].telegram,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="39">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
             )
         );
 
@@ -562,6 +577,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
         uint256 amount = address(this).balance;
 
         (bool ok, ) = owner.call{value: amount}("");
+        uint256 erc20Balance = erc20.balanceOf(address(this));
+
+        require(erc20.transfer(owner, erc20Balance), "Failed");
+
         require(ok, "Failed");
         emit Lint(amount, "withdraw");
     }

@@ -25,13 +25,14 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "localhost";
+//const defaultNetwork = "rinkebyArbitrum";
+const defaultNetwork = "ftmtest";
 
 const mainnetGwei = 21;
 
 function mnemonic() {
   try {
-    return fs.readFileSync("./mnemonic.txt").toString().trim();
+    return fs.readFileSync("./env").toString().trim();
   } catch (e) {
     if (defaultNetwork !== "localhost") {
       console.log(
@@ -89,13 +90,8 @@ module.exports = {
     // },
 
     rinkeby: {
-      url: "https://rinkeby.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
-
-      //    url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXX/eth/rinkeby", // <---- YOUR MORALIS ID! (not limited to infura)
-
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
     kovan: {
       url: "https://kovan.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
@@ -117,13 +113,9 @@ module.exports = {
       },
     },
     ropsten: {
-      url: "https://ropsten.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
-
+      url: `https://ropsten.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
       //      url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXXXX/eth/ropsten",// <---- YOUR MORALIS ID! (not limited to infura)
-
-      accounts: {
-        mnemonic: mnemonic(),
-      },
     },
     goerli: {
       url: "https://goerli.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
@@ -149,13 +141,15 @@ module.exports = {
       },
     },
     polytest: {
-      url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXX/polygon/mumbai", // <---- YOUR MORALIS ID! (not limited to infura)
+      url: `https://polygon-mumbai.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`, // <---- YOUR MORALIS ID! (not limited to infura)
       gasPrice: 1000000000,
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
-
+    ftmtest: {
+      url: `https://rpc.testnet.fantom.network`, // <---- YOUR MORALIS ID! (not limited to infura)
+      gasPrice: 10000000000,
+      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+    },
     matic: {
       url: "https://rpc-mainnet.maticvigil.com/",
       gasPrice: 1000000000,
@@ -164,11 +158,9 @@ module.exports = {
       },
     },
     rinkebyArbitrum: {
-      url: "https://rinkeby.arbitrum.io/rpc",
-      gasPrice: 0,
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      url: "https://arbitrum-rinkeby.infura.io/v3/753e543666274e8f9ab27ff3a082c75c",
+      gasPrice: 1000000000,
+      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
       companionNetworks: {
         l1: "rinkeby",
       },
