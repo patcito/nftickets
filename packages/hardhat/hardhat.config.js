@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "ropsten";
+const defaultNetwork = "kk";
 
 const mainnetGwei = 21;
 
@@ -62,7 +62,11 @@ module.exports = {
 
       */
     },
-
+    kk: {
+      url: "https://kovan.optimism.io",
+      gasPrice: 10000,
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
+    },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
@@ -73,7 +77,7 @@ module.exports = {
     // },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.MAINNET_INFURA_KEY}`,
-      accounts: [`${process.env.MAINNET_DEPLOYER_PRIV_KEY}`],
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`,
@@ -81,18 +85,14 @@ module.exports = {
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.GOERLI_INFURA_KEY}`,
-      accounts: [`${process.env.GOERLI_DEPLOYER_PRIV_KEY}`],
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
     },
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
-      accounts: [`${process.env.XDAI_DEPLOYER_PRIV_KEY}`],
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
     },
 
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
-    },
     polytest: {
       url: `https://polygon-mumbai.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`, // <---- YOUR MORALIS ID! (not limited to infura)
       gasPrice: 1000000000,
@@ -103,7 +103,7 @@ module.exports = {
       gasPrice: 10000000000,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
-    rinkebyArbitrum: {
+    ra: {
       url: "https://arbitrum-rinkeby.infura.io/v3/753e543666274e8f9ab27ff3a082c75c",
       gasPrice: 1000000000,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
@@ -134,10 +134,8 @@ module.exports = {
     kovanOptimism: {
       url: "https://kovan.optimism.io",
       gasPrice: 0,
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-      ovm: true,
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
+      ovm: false,
       companionNetworks: {
         l1: "kovan",
       },

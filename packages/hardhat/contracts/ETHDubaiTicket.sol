@@ -371,6 +371,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         _idToScanned[id] = false;
         _idToCanceled[id] = false;
         _idToTicketOption[id] = mintInfo.ticketOption;
+        _idToSpecialStatus[id] = mintInfo.specialStatus;
 
         MintLog memory mintLog = MintLog(
             discount,
@@ -441,25 +442,24 @@ contract ETHDubaiTicket is ERC721URIStorage {
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
             preEvent3 = "Hotel";
         }
-        if (cmpStr(_idToTicketOption[id], "")) {
+        if (!cmpStr(_idToSpecialStatus[id], "")) {
             preEvent1 = _idToSpecialStatus[id];
-            preEvent3 = "";
         }
 
         string memory idstr = uint2str(id);
         string memory svg = string(
             abi.encodePacked(
-                '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
+                '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><rect style="fill:#fff;stroke:black;stroke-width:3;" width="602" height="331" x="1.5" y="1.5" ry="10" /><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="182.54297">',
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
                 preEvent1,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="222.82584"></text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="266.28345">',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="222"></text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="266.28345">',
                 preEvent3,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="87.164688">#',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
                 idstr,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="315.82971">@',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="315">@',
                 _idToAttendeeInfo[id].telegram,
-                '</text> <text style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;" x="241.91556" y="39.293556">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="39">ETHDubai Ticket</text></svg>'
             )
         );
 
