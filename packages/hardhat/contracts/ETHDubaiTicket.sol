@@ -52,7 +52,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         owner = payable(msg.sender);
         settings.maxMint = 50;
 
-        erc20 = ERC20(0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1);
+        erc20 = ERC20(0xbb4C52e21b2f7a7b620253560c3DeDB7fc67D806);
 
         settings.ticketSettings = TicketSettings("early bird");
 
@@ -450,19 +450,19 @@ contract ETHDubaiTicket is ERC721URIStorage {
         view
         returns (string memory)
     {
-        string memory pE1;
-        string memory pE3;
-        if (cmpStr(_idToTicketOption[id], "w")) {
-            pE1 = "Workshops";
+        string memory preEvent1;
+        string memory preEvent3;
+        if (cmpStr(_idToTicketOption[id], "workshop")) {
+            preEvent1 = "Workshops";
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshops")) {
-            pE3 = "Hotel";
+            preEvent3 = "Hotel";
         } else if (settings.workshops[_idToTicketOption[id]]) {
-            pE1 = "Workshops && preparties";
+            preEvent1 = "Workshops && preparties";
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
-            pE3 = "Hotel";
+            preEvent3 = "Hotel";
         }
         if (!cmpStr(_idToSpecialStatus[id], "")) {
-            pE1 = _idToSpecialStatus[id];
+            preEvent1 = _idToSpecialStatus[id];
         }
 
         string memory idstr = uint2str(id);
@@ -471,9 +471,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><rect style="fill:#fff;stroke:black;stroke-width:3;" width="602" height="331" x="1.5" y="1.5" ry="10" /><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
                 '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
-                pE1,
+                preEvent1,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="222"></text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="266.28345">',
-                pE3,
+                preEvent3,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
                 idstr,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="315">@',
