@@ -58,6 +58,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
         settings.ticketOptionPrices["hotelWorkshops"] = 2.15 ether;
         settings.ticketOptionPrices["hotelWorkshopsAndPreParty"] = 0.4 ether;
+        settings.workshops["workshopAndPreParty"] = true;
     }
 
     struct Resellable {
@@ -78,6 +79,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         TicketSettings ticketSettings;
         uint256 maxMint;
         mapping(address => Discount) discounts;
+        mapping(string => bool) workshops;
         mapping(string => uint256) ticketOptionPrices;
     }
     struct AttendeeInfo {
@@ -440,12 +442,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             preEvent1 = "Workshops";
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshops")) {
             preEvent3 = "Hotel";
-        } else if (
-            cmpStr(_idToTicketOption[id], "workshopsAndPreParty") ||
-            cmpStr(_idToTicketOption[id], "workshops1AndPreParty") ||
-            cmpStr(_idToTicketOption[id], "workshops2AndPreParty") ||
-            cmpStr(_idToTicketOption[id], "workshops3AndPreParty")
-        ) {
+        } else if (settings.workshops[_idToTicketOption[id]]) {
             preEvent1 = "Workshops && preparties";
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
             preEvent3 = "Hotel";
