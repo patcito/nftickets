@@ -48,7 +48,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
     constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
         emit Log(msg.sender, "created");
         owner = payable(msg.sender);
-        settings.maxMint = 1;
+        settings.maxMint = 50;
 
         settings.ticketSettings = TicketSettings("early bird");
 
@@ -59,6 +59,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         settings.ticketOptionPrices["hotelWorkshops"] = 2.15 ether;
         settings.ticketOptionPrices["hotelWorkshopsAndPreParty"] = 0.4 ether;
         settings.workshops["workshopAndPreParty"] = true;
+        settings.workshops["hotelWorkshopsAndPreParty"] = true;
     }
 
     struct Resellable {
@@ -289,10 +290,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 if (b > 0) amount = daoa;
             }
         }
+        require(total > 0, "Total can't be 0");
         if (amount > 0) {
             total = total - ((total * amount) / 100);
         }
-        require(total > 0, "Total can't be 0");
 
         return total;
     }
@@ -403,7 +404,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
         payable
         returns (string memory)
     {
-        require(_tokenIds.current() < settings.maxMint, "sold out");
+        require(
+            _tokenIds.current() + mintInfos.length <= settings.maxMint,
+            "sold out"
+        );
         uint256 total = totalPrice(mintInfos);
 
         require(msg.value >= total, "price too low");
@@ -438,14 +442,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         string memory preEvent1;
         string memory preEvent3;
-        if (cmpStr(_idToTicketOption[id], "workshops")) {
-            preEvent1 = "Workshops";
-        } else if (cmpStr(_idToTicketOption[id], "hotelWorkshops")) {
-            preEvent3 = "Hotel";
-        } else if (settings.workshops[_idToTicketOption[id]]) {
-            preEvent1 = "Workshops && preparties";
-        } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
-            preEvent3 = "Hotel";
+        if (cmpStr(_idToTicketOption[id], "hotelConference")) {
+            preEvent1 = "hotel";
+        }
+
+        if (settings.workshops[_idToTicketOption[id]]) {
+            preEvent1 = _idToTicketOption[id];
         }
         if (!cmpStr(_idToSpecialStatus[id], "")) {
             preEvent1 = _idToSpecialStatus[id];
@@ -456,7 +458,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><rect style="fill:#fff;stroke:black;stroke-width:3;" width="602" height="331" x="1.5" y="1.5" ry="10" /><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:20px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
                 preEvent1,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="222"></text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="266.28345">',
                 preEvent3,
