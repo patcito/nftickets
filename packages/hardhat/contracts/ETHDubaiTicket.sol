@@ -52,17 +52,25 @@ contract ETHDubaiTicket is ERC721URIStorage {
         owner = payable(msg.sender);
         settings.maxMint = 50;
 
-        erc20 = ERC20(0xbb4C52e21b2f7a7b620253560c3DeDB7fc67D806);
+        erc20 = ERC20(0x6244D7f9245ad590490338db2fbEd815c2358034);
 
-        settings.ticketSettings = TicketSettings("early bird");
+        settings.ticketSettings = TicketSettings("early");
 
         settings.ticketOptionPrices["conference"] = 0.1 ether;
         settings.ticketOptionPrices["workshop"] = 2 ether;
-        settings.ticketOptionPrices["workshopAndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["workshop1AndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["workshop2AndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["workshop3AndPreParty"] = 0.2 ether;
         settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
-        settings.ticketOptionPrices["hotelWorkshops"] = 2.15 ether;
-        settings.ticketOptionPrices["hotelWorkshopsAndPreParty"] = 0.4 ether;
-        settings.workshops["workshopAndPreParty"] = true;
+        settings.ticketOptionPrices["hotelWorkshops1AndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["hotelWorkshops2AndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["hotelWorkshops3AndPreParty"] = 0.4 ether;
+        settings.workshops["workshop1AndPreParty"] = true;
+        settings.workshops["workshop2AndPreParty"] = true;
+        settings.workshops["workshop3AndPreParty"] = true;
+        settings.workshops["hotelWorkshops1AndPreParty"] = true;
+        settings.workshops["hotelWorkshops2AndPreParty"] = true;
+        settings.workshops["hotelWorkshops3AndPreParty"] = true;
     }
 
     struct Resellable {
@@ -300,7 +308,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             }
         }
         require(total > 0, "Total can't be 0");
-        if (hasDiscount || amount > 0) {
+        if (amount > 0) {
             total = total - ((total * amount) / 100);
         }
 
@@ -386,6 +394,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         _idToScanned[id] = false;
         _idToCanceled[id] = false;
         _idToTicketOption[id] = mintInfo.ticketOption;
+        _idToSpecialStatus[id] = mintInfo.specialStatus;
 
         MintLog memory mintLog = MintLog(
             discount,
@@ -412,7 +421,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
         payable
         returns (string memory)
     {
-        require(_tokenIds.current() < settings.maxMint, "sold out");
+        require(
+            _tokenIds.current() + mintInfos.length <= settings.maxMint,
+            "sold out"
+        );
         uint256 total = totalPrice(mintInfos);
 
         //        require(msg.value >= total, "price too low");
@@ -451,15 +463,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
         returns (string memory)
     {
         string memory preEvent1;
-        string memory preEvent3;
-        if (cmpStr(_idToTicketOption[id], "workshop")) {
-            preEvent1 = "Workshops";
-        } else if (cmpStr(_idToTicketOption[id], "hotelWorkshops")) {
-            preEvent3 = "Hotel";
-        } else if (settings.workshops[_idToTicketOption[id]]) {
-            preEvent1 = "Workshops && preparties";
-        } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
-            preEvent3 = "Hotel";
+        if (cmpStr(_idToTicketOption[id], "hotelConference")) {
+            preEvent1 = "hotel";
+        }
+
+        if (settings.workshops[_idToTicketOption[id]]) {
+            preEvent1 = _idToTicketOption[id];
         }
         if (!cmpStr(_idToSpecialStatus[id], "")) {
             preEvent1 = _idToSpecialStatus[id];
@@ -470,13 +479,11 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><rect style="fill:#fff;stroke:black;stroke-width:3;" width="602" height="331" x="1.5" y="1.5" ry="10" /><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:20px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
                 preEvent1,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="222"></text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="266.28345">',
-                preEvent3,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
+                '</text><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
                 idstr,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="315">@',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="290">@',
                 _idToAttendeeInfo[id].telegram,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="39">ETHDubai Ticket</text></svg>'
             )
