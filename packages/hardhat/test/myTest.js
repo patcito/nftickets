@@ -149,7 +149,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -187,7 +187,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -229,7 +229,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -304,7 +304,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -360,7 +360,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -447,7 +447,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -637,7 +637,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -679,7 +679,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -749,7 +749,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -826,7 +826,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };
@@ -1023,7 +1023,7 @@ describe("My Dapp", function () {
         bio: "hello there",
         job: "dev",
         company: "yearn",
-        diet: "omnivore",
+        workshop: "omnivore",
         tshirt: "M",
         telegram: "patcitotel",
       };

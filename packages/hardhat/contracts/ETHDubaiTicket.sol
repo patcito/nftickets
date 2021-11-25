@@ -88,7 +88,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string bio;
         string job;
         string company;
-        string diet;
+        string workshop;
         string tshirt;
         string telegram;
     }
@@ -264,6 +264,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
                     hasDiscount = true;
                 }
             }
+            if (!hasDiscount) {
+                amount = 0;
+            }
         } else {
             address z = 0x0000000000000000000000000000000000000000;
             uint256 b = 0;
@@ -284,10 +287,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 if (b > 0) amount = daoa;
             }
         }
-        require(total > 0, "Total can't be 0");
-        if (hasDiscount || amount > 0) {
+        if (amount > 0) {
             total = total - ((total * amount) / 100);
         }
+        require(total > 0, "Total can't be 0");
 
         return total;
     }
@@ -437,7 +440,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
             preEvent1 = "Workshops";
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshops")) {
             preEvent3 = "Hotel";
-        } else if (cmpStr(_idToTicketOption[id], "workshopsAndPreParty")) {
+        } else if (
+            cmpStr(_idToTicketOption[id], "workshopsAndPreParty") ||
+            cmpStr(_idToTicketOption[id], "workshops1AndPreParty") ||
+            cmpStr(_idToTicketOption[id], "workshops2AndPreParty") ||
+            cmpStr(_idToTicketOption[id], "workshops3AndPreParty")
+        ) {
             preEvent1 = "Workshops && preparties";
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
             preEvent3 = "Hotel";
