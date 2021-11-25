@@ -50,9 +50,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
     constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
         emit Log(msg.sender, "created");
         owner = payable(msg.sender);
-        settings.maxMint = 1;
+        settings.maxMint = 50;
 
-        erc20 = ERC20(0x6244D7f9245ad590490338db2fbEd815c2358034);
+        erc20 = ERC20(0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1);
 
         settings.ticketSettings = TicketSettings("early bird");
 
@@ -92,7 +92,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         string bio;
         string job;
         string company;
-        string diet;
+        string workshop;
         string tshirt;
         string telegram;
     }
@@ -273,6 +273,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 ) {
                     hasDiscount = true;
                 }
+            }
+            if (!hasDiscount) {
+                amount = 0;
             }
         } else {
             address z = 0x0000000000000000000000000000000000000000;
@@ -456,15 +459,14 @@ contract ETHDubaiTicket is ERC721URIStorage {
         } else if (cmpStr(_idToTicketOption[id], "hotelWorkshopsAndPreParty")) {
             preEvent3 = "Hotel";
         }
-        if (cmpStr(_idToTicketOption[id], "")) {
+        if (!cmpStr(_idToSpecialStatus[id], "")) {
             preEvent1 = _idToSpecialStatus[id];
-            preEvent3 = "";
         }
 
         string memory idstr = uint2str(id);
         string memory svg = string(
             abi.encodePacked(
-                '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
+                '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><rect style="fill:#fff;stroke:black;stroke-width:3;" width="602" height="331" x="1.5" y="1.5" ry="10" /><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
                 '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
                 preEvent1,
@@ -474,7 +476,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 idstr,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="315">@',
                 _idToAttendeeInfo[id].telegram,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="39">ETHDubai Ticket</text><rect style="fill:none;stroke:#000000;stroke-width:3.0572;stroke-miterlimit:4;stroke-dasharray:none" id="rect2950" width="602.97424" height="331.64685" x="0" y="0" ry="10.078842" /></svg>'
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="39">ETHDubai Ticket</text></svg>'
             )
         );
 
