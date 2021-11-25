@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "localhost";
+const defaultNetwork = "ropsten";
 
 const mainnetGwei = 21;
 
@@ -82,6 +82,7 @@ module.exports = {
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`,
       accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
+      ropsten: 1499999191,
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.GOERLI_INFURA_KEY}`,

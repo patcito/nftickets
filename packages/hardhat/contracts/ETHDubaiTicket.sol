@@ -50,16 +50,23 @@ contract ETHDubaiTicket is ERC721URIStorage {
         owner = payable(msg.sender);
         settings.maxMint = 50;
 
-        settings.ticketSettings = TicketSettings("early bird");
+        settings.ticketSettings = TicketSettings("early");
 
         settings.ticketOptionPrices["conference"] = 0.1 ether;
         settings.ticketOptionPrices["workshop"] = 2 ether;
-        settings.ticketOptionPrices["workshopAndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["workshop1AndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["workshop2AndPreParty"] = 0.2 ether;
+        settings.ticketOptionPrices["workshop3AndPreParty"] = 0.2 ether;
         settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
-        settings.ticketOptionPrices["hotelWorkshops"] = 2.15 ether;
-        settings.ticketOptionPrices["hotelWorkshopsAndPreParty"] = 0.4 ether;
-        settings.workshops["workshopAndPreParty"] = true;
-        settings.workshops["hotelWorkshopsAndPreParty"] = true;
+        settings.ticketOptionPrices["hotelWorkshops1AndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["hotelWorkshops2AndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["hotelWorkshops3AndPreParty"] = 0.4 ether;
+        settings.workshops["workshop1AndPreParty"] = true;
+        settings.workshops["workshop2AndPreParty"] = true;
+        settings.workshops["workshop3AndPreParty"] = true;
+        settings.workshops["hotelWorkshops1AndPreParty"] = true;
+        settings.workshops["hotelWorkshops2AndPreParty"] = true;
+        settings.workshops["hotelWorkshops3AndPreParty"] = true;
     }
 
     struct Resellable {
@@ -441,7 +448,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         returns (string memory)
     {
         string memory preEvent1;
-        string memory preEvent3;
         if (cmpStr(_idToTicketOption[id], "hotelConference")) {
             preEvent1 = "hotel";
         }
@@ -460,11 +466,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 renderTokenById(id),
                 '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:20px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
                 preEvent1,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="222"></text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="266.28345">',
-                preEvent3,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
+                '</text><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
                 idstr,
-                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="315">@',
+                '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="290">@',
                 _idToAttendeeInfo[id].telegram,
                 '</text> <text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="39">ETHDubai Ticket</text></svg>'
             )
