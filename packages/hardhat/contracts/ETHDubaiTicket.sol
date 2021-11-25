@@ -52,7 +52,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         owner = payable(msg.sender);
         settings.maxMint = 50;
 
-        erc20 = ERC20(0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1);
+        erc20 = ERC20(0x6244D7f9245ad590490338db2fbEd815c2358034);
 
         settings.ticketSettings = TicketSettings("early bird");
 
