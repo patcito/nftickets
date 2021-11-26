@@ -145,7 +145,8 @@ contract ETHDubaiTicket {
             if (!hasDiscount) {
                 amount = 0;
             }
-        } else {
+        }
+        if (amount > 0) {
             address z = 0x0000000000000000000000000000000000000000;
             uint256 b = 0;
             if (dao1 != z) {
