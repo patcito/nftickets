@@ -16,7 +16,7 @@ contract ETHDubaiTicket {
     address public dao3;
     uint256 public daoa;
 
-    uint256[20] ticketOptions;
+    uint256[20] public ticketOptions;
     Settings public settings;
     event Log(address indexed sender, string message);
     event Lint(uint256 indexed tokenId, string message);
