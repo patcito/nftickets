@@ -14,16 +14,15 @@ contract ETHDubaiTicket {
     address public dao1;
     address public dao2;
     address public dao3;
+    address public dao4;
     uint256 public daoa;
 
     uint256[20] public ticketOptions;
     Settings public settings;
     event Log(address indexed sender, string message);
     event Lint(uint256 indexed tokenId, string message);
-    event LMintId(address indexed sender, uint256 id, string message);
     event LDiscount(address indexed sender, Discount discount, string message);
-
-    event LTicketAction(uint256 indexed id, bool value, string message);
+    event LMint(address indexed sender, MintInfo[] mintInfo, string message);
 
     event LTicketSettings(
         TicketSettings indexed ticketSettings,
@@ -100,12 +99,14 @@ contract ETHDubaiTicket {
         address d1,
         address d2,
         address d3,
+        address d4,
         uint256 a
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
         dao1 = d1;
         dao2 = d2;
         dao3 = d3;
+        dao4 = d4;
         daoa = a;
         return true;
     }
@@ -165,12 +166,16 @@ contract ETHDubaiTicket {
                 b = token.balanceOf(msg.sender);
                 if (b > 0) amount = daoa;
             }
+            if (amount == 0 && dao4 != z) {
+                ERC20 token = ERC20(dao4);
+                b = token.balanceOf(msg.sender);
+                if (b > 0) amount = daoa;
+            }
         }
         require(total > 0, "Total can't be 0");
         if (amount > 0) {
             total = total - ((total * amount) / 100);
         }
-
         return total;
     }
 
@@ -204,6 +209,7 @@ contract ETHDubaiTicket {
             );
             _tokenIds.increment();
         }
+        //emit LMint(msg.sender, mintInfos, "minted");
         return ids;
     }
 
