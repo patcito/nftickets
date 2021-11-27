@@ -45,7 +45,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
     event LMint(MintLog indexed mintLog, string message);
     event LResell(ResellLog indexed resellLog, string message);
 
-    constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
+    //constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
+    constructor() ERC721("TESTETHDT", "EBI") {
         emit Log(msg.sender, "created");
         owner = payable(msg.sender);
         settings.maxMint = 50;
