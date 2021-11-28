@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "metistest";
+const defaultNetwork = "localhost";
 
 const mainnetGwei = 21;
 
@@ -91,7 +91,8 @@ module.exports = {
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
-      accounts: [`${process.env.XDAI_DEPLOYER_PRIV_KEY}`],
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
+      gas: 500000,
     },
 
     rinkeby: {
@@ -148,6 +149,10 @@ module.exports = {
     polytest: {
       url: `https://polygon-mumbai.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`, // <---- YOUR MORALIS ID! (not limited to infura)
       gasPrice: 1000000000,
+      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+    },
+    ftm: {
+      url: `https://rpc.fantom.network`, // <---- YOUR MORALIS ID! (not limited to infura)
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
     ftmtest: {
