@@ -23,6 +23,17 @@ contract ETHDubaiTicket {
     event Lint(uint256 indexed tokenId, string message);
     event LDiscount(address indexed sender, Discount discount, string message);
     event LMint(address indexed sender, MintInfo[] mintInfo, string message);
+    enum Ticket {
+        CONFERENCE,
+        WORKSHOP,
+        WORKSHOP1_AND_PRE_PARTY,
+        WORKSHOP2_AND_PRE_PARTY,
+        WORKSHOP3_AND_PRE_PARTY,
+        HOTEL_CONFERENCE,
+        HOTEL_WORKSHOP1_AND_PRE_PARTY,
+        HOTEL_WORKSHOP2_AND_PRE_PARTY,
+        HOTEL_WORKSHOP3_AND_PRE_PARTY
+    }
 
     event LTicketSettings(
         TicketSettings indexed ticketSettings,
@@ -36,15 +47,21 @@ contract ETHDubaiTicket {
 
         settings.ticketSettings = TicketSettings("early");
 
-        ticketOptions[0] = 0.1 ether;
-        ticketOptions[1] = 2 ether;
-        ticketOptions[2] = 0.2 ether;
-        ticketOptions[3] = 0.2 ether;
-        ticketOptions[4] = 0.2 ether;
-        ticketOptions[5] = 0.2 ether;
-        ticketOptions[6] = 0.4 ether;
-        ticketOptions[7] = 0.4 ether;
-        ticketOptions[8] = 0.4 ether;
+        ticketOptions[uint256(Ticket.CONFERENCE)] = 0.1 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP)] = 2 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP1_AND_PRE_PARTY)] = 0.2 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP2_AND_PRE_PARTY)] = 0.2 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP3_AND_PRE_PARTY)] = 0.2 ether;
+        ticketOptions[uint256(Ticket.HOTEL_CONFERENCE)] = 0.2 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP1_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP2_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP3_AND_PRE_PARTY)
+        ] = 0.4 ether;
     }
 
     struct Discount {
@@ -196,9 +213,8 @@ contract ETHDubaiTicket {
             _tokenIds.current() + mintInfos.length <= settings.maxMint,
             "sold out"
         );
-        uint256 total = totalPrice(mintInfos);
+        uint256 total = 0;
 
-        require(msg.value >= total, "price too low");
         string memory ids = "";
         for (uint256 i = 0; i < mintInfos.length; i++) {
             require(
@@ -207,8 +223,11 @@ contract ETHDubaiTicket {
                     msg.sender == owner,
                 "only owner"
             );
+            total += getPrice(msg.sender, mintInfos[i].ticketOption);
             _tokenIds.increment();
         }
+
+        require(msg.value >= total, "price too low");
         //emit LMint(msg.sender, mintInfos, "minted");
         return ids;
     }
