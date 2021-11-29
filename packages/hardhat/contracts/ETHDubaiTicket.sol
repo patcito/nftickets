@@ -3,8 +3,8 @@ pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./HexStrings.sol";
 import "./ToColor.sol";
 import "base64-sol/base64.sol";
@@ -16,12 +16,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
     using HexStrings for uint160;
     using ToColor for bytes3;
     using Counters for Counters.Counter;
+    using EnumerableSet for EnumerableSet.AddressSet;
     Counters.Counter private _tokenIds;
     address payable public owner;
-    address public dao1;
-    address public dao2;
-    address public dao3;
-    uint256 public daoa;
     Settings public settings;
     event Log(address indexed sender, string message);
     event Lint(uint256 indexed tokenId, string message);
@@ -144,6 +141,11 @@ contract ETHDubaiTicket is ERC721URIStorage {
     mapping(uint256 => Colors) public _idToColors;
     mapping(uint256 => string) public _idToTicketOption;
     mapping(uint256 => string) public _idToSpecialStatus;
+    EnumerableSet.AddressSet private daosAddresses;
+    mapping(address => uint256) public daosQty;
+    mapping(address => Counters.Counter) public daosUsed;
+    mapping(address => uint256) public daosMinBalance;
+    mapping(address => uint256) public daosDiscount;
 
     function setDiscount(
         address buyer,
@@ -178,17 +180,19 @@ contract ETHDubaiTicket is ERC721URIStorage {
         return scan;
     }
 
-    function setDaos(
-        address d1,
-        address d2,
-        address d3,
-        uint256 a
+    function setDao(
+        address dao,
+        uint256 qty,
+        uint256 discount,
+        uint256 minBalance
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
-        dao1 = d1;
-        dao2 = d2;
-        dao3 = d3;
-        daoa = a;
+        if (!daosAddresses.contains(dao)) {
+            daosAddresses.add(dao);
+        }
+        daosQty[dao] = qty;
+        daosMinBalance[dao] = minBalance;
+        daosDiscount[dao] = discount;
         return true;
     }
 
@@ -254,10 +258,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
         emit LResell(resellL, "resell");
     }
 
-    function getPrice(address sender, string memory ticketOption)
-        public
+    function getDiscount(address sender, string memory ticketOption)
+        internal
         view
-        returns (uint256)
+        returns (uint256[2] memory)
     {
         Discount memory discount = settings.discounts[sender];
         uint256 amount = settings.discounts[sender].amount;
@@ -279,27 +283,78 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 amount = 0;
             }
         }
-        if (amount == 0) {
-            address z = 0x0000000000000000000000000000000000000000;
-            uint256 b = 0;
-            if (dao1 != z) {
-                ERC721 token = ERC721(dao1);
-                b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
-            }
-            if (amount == 0 && dao2 != z) {
-                ERC721 token = ERC721(dao2);
-                b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
-            }
+        return [amount, total];
+    }
 
-            if (amount == 0 && dao3 != z) {
-                ERC721 token = ERC721(dao3);
+    function getDaoDiscountView(uint256 amount)
+        internal
+        view
+        returns (uint256)
+    {
+        if (amount == 0) {
+            uint256 b = 0;
+
+            for (uint256 j = 0; j < daosAddresses.length(); j++) {
+                address dao = daosAddresses.at(j);
+                ERC721 token = ERC721(dao);
                 b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
+                if (
+                    b > daosMinBalance[dao] &&
+                    daosUsed[dao].current() < daosQty[dao] &&
+                    amount == 0
+                ) {
+                    amount = daosDiscount[dao];
+                }
             }
         }
-        require(total > 0, "Total can't be 0");
+        return amount;
+    }
+
+    function getDaoDiscount(uint256 amount) internal returns (uint256) {
+        if (amount == 0) {
+            uint256 b = 0;
+
+            for (uint256 j = 0; j < daosAddresses.length(); j++) {
+                address dao = daosAddresses.at(j);
+                ERC721 token = ERC721(dao);
+                b = token.balanceOf(msg.sender);
+                if (
+                    b > daosMinBalance[dao] &&
+                    daosUsed[dao].current() < daosQty[dao] &&
+                    amount == 0
+                ) {
+                    amount = daosDiscount[dao];
+                    daosUsed[dao].increment();
+                }
+            }
+        }
+        return amount;
+    }
+
+    function getPrice(address sender, string memory ticketOption)
+        public
+        returns (uint256)
+    {
+        uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
+        uint256 total = amountAndTotal[1];
+        uint256 amount = getDaoDiscount(amountAndTotal[0]);
+        require(total > 0, "total = 0");
+        if (amount > 0) {
+            total = total - ((total * amount) / 100);
+        }
+
+        return total;
+    }
+
+    function getPriceView(address sender, string memory ticketOption)
+        public
+        view
+        returns (uint256)
+    {
+        uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
+        uint256 total = amountAndTotal[1];
+        uint256 amount = getDaoDiscountView(amountAndTotal[0]);
+        require(total > 0, "total = 0");
         if (amount > 0) {
             total = total - ((total * amount) / 100);
         }
@@ -403,6 +458,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function totalPrice(MintInfo[] memory mIs) public view returns (uint256) {
         uint256 t = 0;
         for (uint256 i = 0; i < mIs.length; i++) {
+            t += getPriceView(msg.sender, mIs[i].ticketOption);
+        }
+        return t;
+    }
+
+    function totalPriceInternal(MintInfo[] memory mIs)
+        internal
+        returns (uint256)
+    {
+        uint256 t = 0;
+        for (uint256 i = 0; i < mIs.length; i++) {
             t += getPrice(msg.sender, mIs[i].ticketOption);
         }
         return t;
@@ -417,7 +483,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             _tokenIds.current() + mintInfos.length <= settings.maxMint,
             "sold out"
         );
-        uint256 total = totalPrice(mintInfos);
+        uint256 total = totalPriceInternal(mintInfos);
 
         require(msg.value >= total, "price too low");
         string memory ids = "";

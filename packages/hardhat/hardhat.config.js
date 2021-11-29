@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "localhost";
+const defaultNetwork = "oo";
 
 const mainnetGwei = 21;
 
@@ -65,6 +65,10 @@ module.exports = {
     metistest: {
       url: `https://stardust.metis.io/?owner=588`,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+    },
+    oo: {
+      url: "https://mainnet.optimism.io",
+      accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
     },
     kk: {
       url: "https://kovan.optimism.io",
