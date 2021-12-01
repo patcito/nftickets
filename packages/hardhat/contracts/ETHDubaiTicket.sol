@@ -2,6 +2,7 @@ pragma experimental ABIEncoderV2;
 pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 
@@ -9,13 +10,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract ETHDubaiTicket {
     using Counters for Counters.Counter;
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     Counters.Counter private _tokenIds;
     address payable public owner;
-    address public dao1;
-    address public dao2;
-    address public dao3;
-    address public dao4;
-    uint256 public daoa;
 
     uint256[20] public ticketOptions;
     Settings public settings;
@@ -25,15 +23,21 @@ contract ETHDubaiTicket {
     event LMint(address indexed sender, MintInfo[] mintInfo, string message);
     enum Ticket {
         CONFERENCE,
-        WORKSHOP,
+        HOTEL_CONFERENCE,
         WORKSHOP1_AND_PRE_PARTY,
         WORKSHOP2_AND_PRE_PARTY,
         WORKSHOP3_AND_PRE_PARTY,
-        HOTEL_CONFERENCE,
         HOTEL_WORKSHOP1_AND_PRE_PARTY,
         HOTEL_WORKSHOP2_AND_PRE_PARTY,
         HOTEL_WORKSHOP3_AND_PRE_PARTY
     }
+    EnumerableSet.AddressSet private daosAddresses;
+    mapping(address => uint256) public daosQty;
+    mapping(address => Counters.Counter) public daosUsed;
+    mapping(address => uint256) public daosMinBalance;
+    mapping(address => uint256) public daosDiscount;
+    mapping(address => uint256) public daosMinTotal;
+    mapping(address => Discount) discounts;
 
     event LTicketSettings(
         TicketSettings indexed ticketSettings,
@@ -47,21 +51,20 @@ contract ETHDubaiTicket {
 
         settings.ticketSettings = TicketSettings("early");
 
-        ticketOptions[uint256(Ticket.CONFERENCE)] = 0.1 ether;
-        ticketOptions[uint256(Ticket.WORKSHOP)] = 2 ether;
-        ticketOptions[uint256(Ticket.WORKSHOP1_AND_PRE_PARTY)] = 0.2 ether;
-        ticketOptions[uint256(Ticket.WORKSHOP2_AND_PRE_PARTY)] = 0.2 ether;
-        ticketOptions[uint256(Ticket.WORKSHOP3_AND_PRE_PARTY)] = 0.2 ether;
-        ticketOptions[uint256(Ticket.HOTEL_CONFERENCE)] = 0.2 ether;
+        ticketOptions[uint256(Ticket.CONFERENCE)] = 0.07 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP1_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP2_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP3_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[uint256(Ticket.HOTEL_CONFERENCE)] = 0.17 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP1_AND_PRE_PARTY)
-        ] = 0.4 ether;
+        ] = 0.32 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP2_AND_PRE_PARTY)
-        ] = 0.4 ether;
+        ] = 0.32 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP3_AND_PRE_PARTY)
-        ] = 0.4 ether;
+        ] = 0.32 ether;
     }
 
     struct Discount {
@@ -80,19 +83,18 @@ contract ETHDubaiTicket {
     struct Settings {
         TicketSettings ticketSettings;
         uint256 maxMint;
-        mapping(address => Discount) discounts;
     }
 
     function setDiscount(
         address buyer,
-        uint256[] memory discounts,
+        uint256[] memory newDiscounts,
         uint256 amount
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
 
-        Discount memory d = Discount(discounts, amount);
+        Discount memory d = Discount(newDiscounts, amount);
         emit LDiscount(buyer, d, "set discount buyer");
-        settings.discounts[buyer] = d;
+        discounts[buyer] = d;
         return true;
     }
 
@@ -112,19 +114,21 @@ contract ETHDubaiTicket {
         return true;
     }
 
-    function setDaos(
-        address d1,
-        address d2,
-        address d3,
-        address d4,
-        uint256 a
+    function setDao(
+        address dao,
+        uint256 qty,
+        uint256 discount,
+        uint256 minBalance,
+        uint256 minTotal
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
-        dao1 = d1;
-        dao2 = d2;
-        dao3 = d3;
-        dao4 = d4;
-        daoa = a;
+        if (!daosAddresses.contains(dao)) {
+            daosAddresses.add(dao);
+        }
+        daosQty[dao] = qty;
+        daosMinBalance[dao] = minBalance;
+        daosDiscount[dao] = discount;
+        daosMinTotal[dao] = minTotal;
         return true;
     }
 
@@ -144,16 +148,17 @@ contract ETHDubaiTicket {
             keccak256(abi.encodePacked((opt))));
     }
 
-    function getPrice(address sender, uint256 ticketOption)
-        public
+    function getDiscount(address sender, uint256 ticketOption)
+        internal
         view
-        returns (uint256)
+        returns (uint256[2] memory)
     {
-        Discount memory discount = settings.discounts[sender];
-        uint256 amount = settings.discounts[sender].amount;
+        Discount memory discount = discounts[sender];
+        uint256 amount = discounts[sender].amount;
         uint256 total = 0;
         bool hasDiscount = false;
         total = total + ticketOptions[ticketOption];
+
         if (amount > 0) {
             for (uint256 j = 0; j < discount.ticketOptions.length; j++) {
                 if (discount.ticketOptions[j] == ticketOption) {
@@ -164,39 +169,106 @@ contract ETHDubaiTicket {
                 amount = 0;
             }
         }
-        if (amount > 0) {
-            address z = 0x0000000000000000000000000000000000000000;
-            uint256 b = 0;
-            if (dao1 != z) {
-                ERC20 token = ERC20(dao1);
-                b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
-            }
-            if (amount == 0 && dao2 != z) {
-                ERC20 token = ERC20(dao2);
-                b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
-            }
+        return [amount, total];
+    }
 
-            if (amount == 0 && dao3 != z) {
-                ERC20 token = ERC20(dao3);
+    function getDaoDiscountView(uint256 amount)
+        internal
+        view
+        returns (uint256[2] memory)
+    {
+        uint256 minTotal = 0;
+        if (amount == 0) {
+            uint256 b = 0;
+
+            for (uint256 j = 0; j < daosAddresses.length(); j++) {
+                address dao = daosAddresses.at(j);
+                ERC20 token = ERC20(dao);
                 b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
-            }
-            if (amount == 0 && dao4 != z) {
-                ERC20 token = ERC20(dao4);
-                b = token.balanceOf(msg.sender);
-                if (b > 0) amount = daoa;
+                if (
+                    b > daosMinBalance[dao] &&
+                    daosUsed[dao].current() < daosQty[dao] &&
+                    amount == 0
+                ) {
+                    amount = daosDiscount[dao];
+                    minTotal = daosMinTotal[dao];
+                }
             }
         }
-        require(total > 0, "Total can't be 0");
-        if (amount > 0) {
-            total = total - ((total * amount) / 100);
+        return [amount, minTotal];
+    }
+
+    function getDaoDiscount(uint256 amount)
+        internal
+        returns (uint256[2] memory)
+    {
+        uint256 minTotal = 0;
+        if (amount == 0) {
+            uint256 b = 0;
+
+            for (uint256 j = 0; j < daosAddresses.length(); j++) {
+                address dao = daosAddresses.at(j);
+                ERC20 token = ERC20(dao);
+                b = token.balanceOf(msg.sender);
+                if (
+                    b > daosMinBalance[dao] &&
+                    daosUsed[dao].current() < daosQty[dao] &&
+                    amount == 0
+                ) {
+                    amount = daosDiscount[dao];
+                    daosUsed[dao].increment();
+                    minTotal = daosMinTotal[dao];
+                }
+            }
         }
+        return [amount, minTotal];
+    }
+
+    function getPrice(address sender, uint256 ticketOption)
+        public
+        returns (uint256)
+    {
+        uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
+        uint256 total = amountAndTotal[1];
+        uint256[2] memory amountAndMinTotal = getDaoDiscount(amountAndTotal[0]);
+        require(total > 0, "total = 0");
+        if (amountAndMinTotal[0] > 0 && total >= amountAndMinTotal[1]) {
+            total = total - ((total * amountAndMinTotal[0]) / 100);
+        }
+
+        return total;
+    }
+
+    function getPriceView(address sender, uint256 ticketOption)
+        public
+        view
+        returns (uint256)
+    {
+        uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
+        uint256 total = amountAndTotal[1];
+        uint256[2] memory amountAndMinTotal = getDaoDiscountView(
+            amountAndTotal[0]
+        );
+        require(total > 0, "total = 0");
+        if (amountAndMinTotal[0] > 0 && total >= amountAndMinTotal[1]) {
+            total = total - ((total * amountAndMinTotal[0]) / 100);
+        }
+
         return total;
     }
 
     function totalPrice(MintInfo[] memory mIs) public view returns (uint256) {
+        uint256 t = 0;
+        for (uint256 i = 0; i < mIs.length; i++) {
+            t += getPriceView(msg.sender, mIs[i].ticketOption);
+        }
+        return t;
+    }
+
+    function totalPriceInternal(MintInfo[] memory mIs)
+        internal
+        returns (uint256)
+    {
         uint256 t = 0;
         for (uint256 i = 0; i < mIs.length; i++) {
             t += getPrice(msg.sender, mIs[i].ticketOption);
@@ -224,6 +296,34 @@ contract ETHDubaiTicket {
                 "only owner"
             );
             total += getPrice(msg.sender, mintInfos[i].ticketOption);
+            _tokenIds.increment();
+        }
+
+        require(msg.value >= total, "price too low");
+        //emit LMint(msg.sender, mintInfos, "minted");
+        return ids;
+    }
+
+    function mintItemNoDiscount(MintInfo[] memory mintInfos)
+        public
+        payable
+        returns (string memory)
+    {
+        require(
+            _tokenIds.current() + mintInfos.length <= settings.maxMint,
+            "sold out"
+        );
+        uint256 total = 0;
+
+        string memory ids = "";
+        for (uint256 i = 0; i < mintInfos.length; i++) {
+            require(
+                keccak256(abi.encodePacked(mintInfos[i].specialStatus)) ==
+                    keccak256(abi.encodePacked("")) ||
+                    msg.sender == owner,
+                "only owner"
+            );
+            total += ticketOptions[mintInfos[i].ticketOption];
             _tokenIds.increment();
         }
 
