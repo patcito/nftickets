@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 // GET LISTED ON OPENSEA: https://testnets.opensea.io/get-listed/step-two
@@ -37,7 +37,7 @@ contract ETHDubaiTicket {
     mapping(address => uint256) public daosMinBalance;
     mapping(address => uint256) public daosDiscount;
     mapping(address => uint256) public daosMinTotal;
-    mapping(address => Discount) discounts;
+    mapping(address => Discount) public discounts;
 
     event LTicketSettings(
         TicketSettings indexed ticketSettings,
@@ -122,6 +122,7 @@ contract ETHDubaiTicket {
         uint256 minTotal
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
+        require(Address.isContract(dao), "nc");
         if (!daosAddresses.contains(dao)) {
             daosAddresses.add(dao);
         }
@@ -149,7 +150,7 @@ contract ETHDubaiTicket {
     }
 
     function getDiscount(address sender, uint256 ticketOption)
-        internal
+        public
         view
         returns (uint256[2] memory)
     {
@@ -183,15 +184,17 @@ contract ETHDubaiTicket {
 
             for (uint256 j = 0; j < daosAddresses.length(); j++) {
                 address dao = daosAddresses.at(j);
-                ERC20 token = ERC20(dao);
-                b = token.balanceOf(msg.sender);
-                if (
-                    b > daosMinBalance[dao] &&
-                    daosUsed[dao].current() < daosQty[dao] &&
-                    amount == 0
-                ) {
-                    amount = daosDiscount[dao];
-                    minTotal = daosMinTotal[dao];
+                if (daosDiscount[dao] > 0) {
+                    ERC20 token = ERC20(dao);
+                    b = token.balanceOf(msg.sender);
+                    if (
+                        b > daosMinBalance[dao] &&
+                        daosUsed[dao].current() < daosQty[dao] &&
+                        amount == 0
+                    ) {
+                        amount = daosDiscount[dao];
+                        minTotal = daosMinTotal[dao];
+                    }
                 }
             }
         }
@@ -208,16 +211,18 @@ contract ETHDubaiTicket {
 
             for (uint256 j = 0; j < daosAddresses.length(); j++) {
                 address dao = daosAddresses.at(j);
-                ERC20 token = ERC20(dao);
-                b = token.balanceOf(msg.sender);
-                if (
-                    b > daosMinBalance[dao] &&
-                    daosUsed[dao].current() < daosQty[dao] &&
-                    amount == 0
-                ) {
-                    amount = daosDiscount[dao];
-                    daosUsed[dao].increment();
-                    minTotal = daosMinTotal[dao];
+                if (daosDiscount[dao] > 0) {
+                    ERC20 token = ERC20(dao);
+                    b = token.balanceOf(msg.sender);
+                    if (
+                        b > daosMinBalance[dao] &&
+                        daosUsed[dao].current() < daosQty[dao] &&
+                        amount == 0
+                    ) {
+                        amount = daosDiscount[dao];
+                        daosUsed[dao].increment();
+                        minTotal = daosMinTotal[dao];
+                    }
                 }
             }
         }
