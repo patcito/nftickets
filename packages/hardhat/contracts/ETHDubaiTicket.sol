@@ -653,7 +653,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked("ETHDubai Ticket #", id.toString())
         );
         string memory dsc = string(
-            abi.encodePacked("Ticket to ETHDubai conference 2021.")
+            abi.encodePacked("ETHDubai 2022 conference ticket.")
         );
         string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
 
