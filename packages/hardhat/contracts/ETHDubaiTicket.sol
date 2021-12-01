@@ -2,9 +2,8 @@ pragma experimental ABIEncoderV2;
 pragma solidity ^0.8.10;
 //SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./HexStrings.sol";
@@ -13,7 +12,7 @@ import "base64-sol/base64.sol";
 
 // GET LISTED ON OPENSEA: https://testnets.opensea.io/get-listed/step-two
 
-contract ETHDubaiTicket is ERC721URIStorage {
+contract ETHDubaiTicket is ERC721 {
     using Strings for uint256;
     using HexStrings for uint160;
     using ToColor for bytes3;
@@ -56,15 +55,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
 
         settings.ticketSettings = TicketSettings("early");
 
-        settings.ticketOptionPrices["conference"] = 0.1 ether;
+        settings.ticketOptionPrices["conference"] = 0.07 ether;
         settings.ticketOptionPrices["workshop"] = 2 ether;
-        settings.ticketOptionPrices["workshop1AndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["workshop2AndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["workshop3AndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
-        settings.ticketOptionPrices["hotelWorkshops1AndPreParty"] = 0.4 ether;
-        settings.ticketOptionPrices["hotelWorkshops2AndPreParty"] = 0.4 ether;
-        settings.ticketOptionPrices["hotelWorkshops3AndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["workshop1AndPreParty"] = 0.12 ether;
+        settings.ticketOptionPrices["workshop2AndPreParty"] = 0.12 ether;
+        settings.ticketOptionPrices["workshop3AndPreParty"] = 0.12 ether;
+        settings.ticketOptionPrices["hotelConference"] = 0.17 ether;
+        settings.ticketOptionPrices["hotelWorkshops1AndPreParty"] = 0.32 ether;
+        settings.ticketOptionPrices["hotelWorkshops2AndPreParty"] = 0.32 ether;
+        settings.ticketOptionPrices["hotelWorkshops3AndPreParty"] = 0.32 ether;
         settings.workshops["workshop1AndPreParty"] = true;
         settings.workshops["workshop2AndPreParty"] = true;
         settings.workshops["workshop3AndPreParty"] = true;
@@ -90,7 +89,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
     struct Settings {
         TicketSettings ticketSettings;
         uint256 maxMint;
-        mapping(address => Discount) discounts;
         mapping(string => bool) workshops;
         mapping(string => uint256) ticketOptionPrices;
     }
@@ -145,7 +143,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
     mapping(uint256 => Resellable) public _idToTicketResellable;
     mapping(uint256 => bool) public _idToScanned;
     mapping(uint256 => bool) public _idToCanceled;
-    mapping(uint256 => Colors) public _idToColors;
+    mapping(uint256 => Colors) private _idToColors;
     mapping(uint256 => string) public _idToTicketOption;
     mapping(uint256 => string) public _idToSpecialStatus;
     EnumerableSet.AddressSet private daosAddresses;
@@ -153,17 +151,19 @@ contract ETHDubaiTicket is ERC721URIStorage {
     mapping(address => Counters.Counter) public daosUsed;
     mapping(address => uint256) public daosMinBalance;
     mapping(address => uint256) public daosDiscount;
+    mapping(address => uint256) public daosMinTotal;
+    mapping(address => Discount) public discounts;
 
     function setDiscount(
         address buyer,
-        string[] memory discounts,
+        string[] memory newDiscount,
         uint256 amount
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
 
-        Discount memory d = Discount(discounts, amount);
-        emit LDiscount(buyer, d, "set discount buyer");
-        settings.discounts[buyer] = d;
+        Discount memory d = Discount(newDiscount, amount);
+        emit LDiscount(buyer, d, "setDiscount");
+        discounts[buyer] = d;
         return true;
     }
 
@@ -191,15 +191,16 @@ contract ETHDubaiTicket is ERC721URIStorage {
         address dao,
         uint256 qty,
         uint256 discount,
-        uint256 minBalance
+        uint256 minBalance,
+        uint256 minTotal
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
-        if (!daosAddresses.contains(dao)) {
-            daosAddresses.add(dao);
-        }
+        if (!daosAddresses.contains(dao)) daosAddresses.add(dao);
+
         daosQty[dao] = qty;
         daosMinBalance[dao] = minBalance;
         daosDiscount[dao] = discount;
+        daosMinTotal[dao] = minTotal;
         return true;
     }
 
@@ -279,12 +280,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
 
     // getPrice
     function getDiscount(address sender, string memory ticketOption)
-        internal
+        public
         view
         returns (uint256[2] memory)
     {
-        Discount memory discount = settings.discounts[sender];
-        uint256 amount = settings.discounts[sender].amount;
+        Discount memory discount = discounts[sender];
+        uint256 amount = discounts[sender].amount;
         uint256 total = 0;
         bool hasDiscount = false;
         total = total + settings.ticketOptionPrices[ticketOption];
@@ -309,46 +310,57 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function getDaoDiscountView(uint256 amount)
         internal
         view
-        returns (uint256)
+        returns (uint256[2] memory)
     {
+        uint256 minTotal = 0;
         if (amount == 0) {
             uint256 b = 0;
 
             for (uint256 j = 0; j < daosAddresses.length(); j++) {
                 address dao = daosAddresses.at(j);
-                ERC721 token = ERC721(dao);
-                b = token.balanceOf(msg.sender);
-                if (
-                    b > daosMinBalance[dao] &&
-                    daosUsed[dao].current() < daosQty[dao] &&
-                    amount == 0
-                ) {
-                    amount = daosDiscount[dao];
+                if (daosDiscount[dao] > 0) {
+                    ERC721 token = ERC721(dao);
+                    b = token.balanceOf(msg.sender);
+                    if (
+                        b > daosMinBalance[dao] &&
+                        daosUsed[dao].current() < daosQty[dao] &&
+                        amount == 0
+                    ) {
+                        amount = daosDiscount[dao];
+                        minTotal = daosMinTotal[dao];
+                    }
                 }
             }
         }
-        return amount;
+        return [amount, minTotal];
     }
 
-    function getDaoDiscount(uint256 amount) internal returns (uint256) {
+    function getDaoDiscount(uint256 amount)
+        internal
+        returns (uint256[2] memory)
+    {
+        uint256 minTotal = 0;
         if (amount == 0) {
             uint256 b = 0;
 
             for (uint256 j = 0; j < daosAddresses.length(); j++) {
                 address dao = daosAddresses.at(j);
-                ERC721 token = ERC721(dao);
-                b = token.balanceOf(msg.sender);
-                if (
-                    b > daosMinBalance[dao] &&
-                    daosUsed[dao].current() < daosQty[dao] &&
-                    amount == 0
-                ) {
-                    amount = daosDiscount[dao];
-                    daosUsed[dao].increment();
+                if (daosDiscount[dao] > 0) {
+                    ERC721 token = ERC721(dao);
+                    b = token.balanceOf(msg.sender);
+                    if (
+                        b > daosMinBalance[dao] &&
+                        daosUsed[dao].current() < daosQty[dao] &&
+                        amount == 0
+                    ) {
+                        amount = daosDiscount[dao];
+                        daosUsed[dao].increment();
+                        minTotal = daosMinTotal[dao];
+                    }
                 }
             }
         }
-        return amount;
+        return [amount, minTotal];
     }
 
     function getPrice(address sender, string memory ticketOption)
@@ -357,12 +369,13 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
         uint256 total = amountAndTotal[1];
-        uint256 amount = getDaoDiscount(amountAndTotal[0]);
+        uint256[2] memory amountAndMinTotal = getDaoDiscount(amountAndTotal[0]);
         require(total > 0, "total = 0");
-        if (amount > 0) {
-            total = total - ((total * amount) / 100);
+        if (amountAndTotal[0] > 0) {
+            total = total - ((total * amountAndTotal[0]) / 100);
+        } else if (amountAndMinTotal[0] > 0 && amountAndMinTotal[1] <= total) {
+            total = total - ((total * amountAndMinTotal[0]) / 100);
         }
-
         return total;
     }
 
@@ -373,12 +386,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
         uint256 total = amountAndTotal[1];
-        uint256 amount = getDaoDiscountView(amountAndTotal[0]);
+        uint256[2] memory amountAndMinTotal = getDaoDiscountView(
+            amountAndTotal[0]
+        );
         require(total > 0, "total = 0");
-        if (amount > 0) {
-            total = total - ((total * amount) / 100);
+        if (amountAndTotal[0] > 0) {
+            total = total - ((total * amountAndTotal[0]) / 100);
+        } else if (amountAndMinTotal[0] > 0 && amountAndMinTotal[1] <= total) {
+            total = total - ((total * amountAndMinTotal[0]) / 100);
         }
-
         return total;
     }
 
@@ -392,11 +408,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function genPredictable(
         address sender,
         address that,
-        bytes32 blockNum,
-        string memory attendeeProp
+        bytes32 blockNum
     ) internal pure returns (bytes32) {
-        return
-            keccak256(abi.encodePacked(blockNum, sender, that, attendeeProp));
+        return keccak256(abi.encodePacked(blockNum, sender, that));
     }
 
     function processMintIntem(MintInfo memory mintInfo, address sender)
@@ -404,17 +418,17 @@ contract ETHDubaiTicket is ERC721URIStorage {
         returns (uint256)
     {
         uint256 total;
-        Discount memory discount = settings.discounts[sender];
+        Discount memory discount = discounts[sender];
 
         _tokenIds.increment();
 
         uint256 id = _tokenIds.current();
         _mint(sender, id);
+
         bytes32 predictableRandom1 = genPredictable(
             sender,
             address(this),
-            blockhash(block.number + 1),
-            mintInfo.attendeeInfo.email
+            blockhash(block.number - 1)
         );
 
         _idToColors[id].color1 = genColor(predictableRandom1);
@@ -422,8 +436,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom2 = genPredictable(
             sender,
             address(this),
-            blockhash(block.number + 2),
-            mintInfo.attendeeInfo.telegram
+            blockhash(block.number - 15)
         );
 
         _idToColors[id].color2 = genColor(predictableRandom2);
@@ -431,8 +444,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom3 = genPredictable(
             sender,
             address(this),
-            blockhash(block.number + 3),
-            mintInfo.attendeeInfo.fname
+            blockhash(block.number - 20)
         );
 
         _idToColors[id].color3 = genColor(predictableRandom3);
@@ -440,8 +452,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom4 = genPredictable(
             sender,
             address(this),
-            blockhash(block.number + 4),
-            mintInfo.attendeeInfo.lname
+            blockhash(block.number - 35)
         );
 
         _idToColors[id].color4 = genColor(predictableRandom4);
@@ -449,8 +460,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         bytes32 predictableRandom5 = genPredictable(
             sender,
             address(this),
-            blockhash(block.number + 50),
-            "foo5"
+            blockhash(block.number - 50)
         );
 
         _idToColors[id].color5 = genColor(predictableRandom5);
@@ -458,8 +468,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         _idToAttendeeInfo[id] = mintInfo.attendeeInfo;
         _idToTicketCode[id] = mintInfo.ticketCode;
         _idToTicketResellable[id] = mintInfo.resellable;
-        _idToScanned[id] = false;
-        _idToCanceled[id] = false;
         _idToTicketOption[id] = mintInfo.ticketOption;
         _idToSpecialStatus[id] = mintInfo.specialStatus;
 
@@ -505,7 +513,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
         );
         uint256 total = totalPriceInternal(mintInfos);
 
-        //        require(msg.value >= total, "price too low");
         require(
             erc20.transferFrom(msg.sender, address(this), total),
             "transferFrom fail"
@@ -557,7 +564,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked(
                 '<svg width="606" height="334" xmlns="http://www.w3.org/2000/svg"><rect style="fill:#fff;stroke:black;stroke-width:3;" width="602" height="331" x="1.5" y="1.5" ry="10" /><g transform="matrix(0.72064248,0,0,0.72064248,17.906491,14.009434)"><polygon fill="#',
                 renderTokenById(id),
-                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143.01178" >Conference</text> <text style="font-size:20px;line-height:1.25;fill:#000000;" x="241" y="182.54297">',
+                '" points="0.0009,212.3208 127.9609,287.9578 127.9609,154.1588 " /></g><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="143" >Conference</text> <text style="font-size:20px;line-height:1.25;fill:#000000;" x="241" y="182">',
                 preEvent1,
                 '</text><text style="font-size:40px;line-height:1.25;fill:#000000;" x="241" y="87">#',
                 idstr,
@@ -631,7 +638,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
             abi.encodePacked("ETHDubai Ticket #", id.toString())
         );
         string memory dsc = string(
-            abi.encodePacked("Ticket to ETHDubai conference 2021.")
+            abi.encodePacked("ETHDubai 2022 conference ticket.")
         );
         string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
 
