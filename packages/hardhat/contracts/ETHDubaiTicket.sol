@@ -50,15 +50,15 @@ contract ETHDubaiTicket is ERC721URIStorage {
 
         settings.ticketSettings = TicketSettings("early");
 
-        settings.ticketOptionPrices["conference"] = 0.1 ether;
+        settings.ticketOptionPrices["conference"] = 0.07 ether;
         settings.ticketOptionPrices["workshop"] = 2 ether;
-        settings.ticketOptionPrices["workshop1AndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["workshop2AndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["workshop3AndPreParty"] = 0.2 ether;
-        settings.ticketOptionPrices["hotelConference"] = 0.2 ether;
-        settings.ticketOptionPrices["hotelWorkshops1AndPreParty"] = 0.4 ether;
-        settings.ticketOptionPrices["hotelWorkshops2AndPreParty"] = 0.4 ether;
-        settings.ticketOptionPrices["hotelWorkshops3AndPreParty"] = 0.4 ether;
+        settings.ticketOptionPrices["workshop1AndPreParty"] = 0.12 ether;
+        settings.ticketOptionPrices["workshop2AndPreParty"] = 0.12 ether;
+        settings.ticketOptionPrices["workshop3AndPreParty"] = 0.12 ether;
+        settings.ticketOptionPrices["hotelConference"] = 0.17 ether;
+        settings.ticketOptionPrices["hotelWorkshops1AndPreParty"] = 0.32 ether;
+        settings.ticketOptionPrices["hotelWorkshops2AndPreParty"] = 0.32 ether;
+        settings.ticketOptionPrices["hotelWorkshops3AndPreParty"] = 0.32 ether;
         settings.workshops["workshop1AndPreParty"] = true;
         settings.workshops["workshop2AndPreParty"] = true;
         settings.workshops["workshop3AndPreParty"] = true;
@@ -84,7 +84,6 @@ contract ETHDubaiTicket is ERC721URIStorage {
     struct Settings {
         TicketSettings ticketSettings;
         uint256 maxMint;
-        mapping(address => Discount) discounts;
         mapping(string => bool) workshops;
         mapping(string => uint256) ticketOptionPrices;
     }
@@ -146,17 +145,19 @@ contract ETHDubaiTicket is ERC721URIStorage {
     mapping(address => Counters.Counter) public daosUsed;
     mapping(address => uint256) public daosMinBalance;
     mapping(address => uint256) public daosDiscount;
+    mapping(address => uint256) public daosMinTotal;
+    mapping(address => Discount) discounts;
 
     function setDiscount(
         address buyer,
-        string[] memory discounts,
+        string[] memory newDiscounts,
         uint256 amount
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
 
-        Discount memory d = Discount(discounts, amount);
+        Discount memory d = Discount(newDiscounts, amount);
         emit LDiscount(buyer, d, "set discount buyer");
-        settings.discounts[buyer] = d;
+        discounts[buyer] = d;
         return true;
     }
 
@@ -184,7 +185,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
         address dao,
         uint256 qty,
         uint256 discount,
-        uint256 minBalance
+        uint256 minBalance,
+        uint256 minTotal
     ) public returns (bool) {
         require(msg.sender == owner, "only owner");
         if (!daosAddresses.contains(dao)) {
@@ -193,6 +195,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         daosQty[dao] = qty;
         daosMinBalance[dao] = minBalance;
         daosDiscount[dao] = discount;
+        daosMinTotal[dao] = minTotal;
         return true;
     }
 
@@ -263,8 +266,8 @@ contract ETHDubaiTicket is ERC721URIStorage {
         view
         returns (uint256[2] memory)
     {
-        Discount memory discount = settings.discounts[sender];
-        uint256 amount = settings.discounts[sender].amount;
+        Discount memory discount = discounts[sender];
+        uint256 amount = discounts[sender].amount;
         uint256 total = 0;
         bool hasDiscount = false;
         total = total + settings.ticketOptionPrices[ticketOption];
@@ -289,8 +292,9 @@ contract ETHDubaiTicket is ERC721URIStorage {
     function getDaoDiscountView(uint256 amount)
         internal
         view
-        returns (uint256)
+        returns (uint256[2] memory)
     {
+        uint256 minTotal = 0;
         if (amount == 0) {
             uint256 b = 0;
 
@@ -304,13 +308,18 @@ contract ETHDubaiTicket is ERC721URIStorage {
                     amount == 0
                 ) {
                     amount = daosDiscount[dao];
+                    minTotal = daosMinTotal[dao];
                 }
             }
         }
-        return amount;
+        return [amount, minTotal];
     }
 
-    function getDaoDiscount(uint256 amount) internal returns (uint256) {
+    function getDaoDiscount(uint256 amount)
+        internal
+        returns (uint256[2] memory)
+    {
+        uint256 minTotal = 0;
         if (amount == 0) {
             uint256 b = 0;
 
@@ -325,10 +334,11 @@ contract ETHDubaiTicket is ERC721URIStorage {
                 ) {
                     amount = daosDiscount[dao];
                     daosUsed[dao].increment();
+                    minTotal = daosMinTotal[dao];
                 }
             }
         }
-        return amount;
+        return [amount, minTotal];
     }
 
     function getPrice(address sender, string memory ticketOption)
@@ -337,10 +347,10 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
         uint256 total = amountAndTotal[1];
-        uint256 amount = getDaoDiscount(amountAndTotal[0]);
+        uint256[2] memory amountAndMinTotal = getDaoDiscount(amountAndTotal[0]);
         require(total > 0, "total = 0");
-        if (amount > 0) {
-            total = total - ((total * amount) / 100);
+        if (amountAndMinTotal[0] > 0 && amountAndMinTotal[1] > total) {
+            total = total - ((total * amountAndMinTotal[0]) / 100);
         }
 
         return total;
@@ -353,10 +363,12 @@ contract ETHDubaiTicket is ERC721URIStorage {
     {
         uint256[2] memory amountAndTotal = getDiscount(sender, ticketOption);
         uint256 total = amountAndTotal[1];
-        uint256 amount = getDaoDiscountView(amountAndTotal[0]);
+        uint256[2] memory amountAndMinTotal = getDaoDiscountView(
+            amountAndTotal[0]
+        );
         require(total > 0, "total = 0");
-        if (amount > 0) {
-            total = total - ((total * amount) / 100);
+        if (amountAndMinTotal[0] > 0 && amountAndMinTotal[1] > total) {
+            total = total - ((total * amountAndMinTotal[0]) / 100);
         }
 
         return total;
@@ -384,7 +396,7 @@ contract ETHDubaiTicket is ERC721URIStorage {
         returns (uint256)
     {
         uint256 total;
-        Discount memory discount = settings.discounts[sender];
+        Discount memory discount = discounts[sender];
 
         _tokenIds.increment();
 
