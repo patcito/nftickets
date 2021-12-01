@@ -105,12 +105,12 @@ contract ETHDubaiTicket {
         return max;
     }
 
-    function setTicketOptions(uint256[20] memory ticketOptionsNew)
+    function setTicketOptions(uint256 ticketOptionId, uint256 amount)
         public
         returns (bool)
     {
         require(msg.sender == owner, "only owner");
-        ticketOptions = ticketOptionsNew;
+        ticketOptions[ticketOptionId] = amount;
         return true;
     }
 

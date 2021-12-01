@@ -9,13 +9,16 @@ function sleep(ms) {
 }
 describe("My Dapp", function () {
   let myContract;
+  let erc20;
 
   describe("ETHDubaiTicket", function () {
     it("Should deploy ETHDubaiTicket", async function () {
       const [owner] = await ethers.getSigners();
       const ETHDubaiTicket = await ethers.getContractFactory("ETHDubaiTicket");
+      const Unlimited = await ethers.getContractFactory("Unlimited");
 
       myContract = await ETHDubaiTicket.deploy();
+      erc20 = await Unlimited.deploy();
     });
   });
 
@@ -25,7 +28,7 @@ describe("My Dapp", function () {
       //expect(await myContract.purpose()).to.equal(newPurpose);
       //        expect(true).to.equal(true);
       let ticketSettings = settings.ticketSettings;
-      expect(ticketSettings.name).to.equal("early bird");
+      expect(ticketSettings.name).to.equal("early");
     });
   });
 
@@ -34,50 +37,57 @@ describe("My Dapp", function () {
       let name = "post conf safari";
       let amount = ethers.BigNumber.from("10").pow(16).mul(50);
       const [owner, nonOwner] = await ethers.getSigners();
-      await myContract.setTicketOption(name, amount);
+      await myContract.setTicketOptions(8, amount);
     });
   });
 
   describe("getPrice() 3 days with hotel", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "hotelWorkshopsAndPreParty";
+      let ticketOption = 3;
       const [owner, nonOwner] = await ethers.getSigners();
+      let attendeeInfos = [
+        {
+          ticketCode: "_",
+          ticketOption: 3,
+          specialStatus: "",
+        },
+      ];
       const getTotal = async () => {
         return await myContract
           .connect(nonOwner)
-          .getPrice(nonOwner.address, ticketOption);
+          .getPriceView(nonOwner.address, ticketOption);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.4").toString()
+        ethers.utils.parseEther("0.12").toString()
       );
     });
   });
 
   describe("getPrice() 3 days without Hotel", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "workshopAndPreParty";
+      let ticketOption = 0;
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
         return await myContract
           .connect(nonOwner)
-          .getPrice(nonOwner.address, ticketOption);
+          .getPriceView(nonOwner.address, ticketOption);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.2").toString()
+        ethers.utils.parseEther("0.07").toString()
       );
     });
   });
 
   describe("getPrice() 1 day without Hotel", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "conference";
+      let ticketOption = 6;
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPrice(
+        return await myContract.connect(nonOwner).getPriceView(
           nonOwner.address,
 
           ticketOption
@@ -85,17 +95,17 @@ describe("My Dapp", function () {
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.1").toString()
+        ethers.utils.parseEther("0.32").toString()
       );
     });
   });
 
   describe("getPrice() 1 day with Hotel", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "hotelConference";
+      let ticketOption = 1;
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPrice(
+        return await myContract.connect(nonOwner).getPriceView(
           nonOwner.address,
 
           ticketOption
@@ -103,7 +113,7 @@ describe("My Dapp", function () {
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.2").toString()
+        ethers.utils.parseEther("0.17").toString()
       );
     });
   });
@@ -168,11 +178,11 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
         ],
-        { value: ethers.utils.parseEther("3.8").toHexString() }
+        { value: ethers.utils.parseEther("0.12").toHexString() }
       );
     });
   });
@@ -207,14 +217,19 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: 3,
 
               specialStatus: "",
             },
           ],
-          { value: ethers.utils.parseEther("3.8").toHexString() }
+          { value: ethers.utils.parseEther("0.12").toHexString() }
         );
       };
+      const setMaxMint = async () => {
+        await myContract.setMaxMint(1);
+      };
+      expect(setMaxMint()).to.not.be.revertedWith("sold out");
+
       expect(mintAgain()).to.be.revertedWith("sold out");
     });
   });
@@ -273,15 +288,11 @@ describe("My Dapp", function () {
 
       const [owner, nonOwner] = await ethers.getSigners();
       const setDiscount = async () => {
-        await myContract.setDiscount(
-          nonOwner.address,
-          ["workshopAndPreParty"],
-          amount
-        );
+        await myContract.setDiscount(nonOwner.address, [3], amount);
       };
       expect(setDiscount()).to.not.be.revertedWith("only owner");
     });
-    it("Should be able to set a discount from non owner", async function () {
+    it("Should not be able to set a discount from non owner", async function () {
       const [owner, nonOwner] = await ethers.getSigners();
 
       const nonOwnerSetDiscount = async () => {
@@ -289,7 +300,7 @@ describe("My Dapp", function () {
 
         await myContract
           .connect(nonOwner)
-          .setDiscount(nonOwner.address, ["workshopAndPreParty"], amount);
+          .setDiscount(nonOwner.address, [3], amount);
       };
       expect(nonOwnerSetDiscount()).to.be.revertedWith("only owner");
     });
@@ -321,23 +332,23 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
 
             specialStatus: "",
           },
         ],
-        { value: ethers.utils.parseEther("0.1").toHexString() }
+        { value: ethers.utils.parseEther("0.06").toHexString() }
       );
     });
   });
 
   describe("getPrice() with discount", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "workshopAndPreParty";
+      let ticketOption = 3;
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPrice(
+        return await myContract.connect(nonOwner).getPriceView(
           nonOwner.address,
 
           ticketOption
@@ -345,12 +356,12 @@ describe("My Dapp", function () {
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.1").toString()
+        ethers.utils.parseEther("0.06").toString()
       );
     });
   });
 
-  describe("mintItem() with conference only", function () {
+  describe("mintItem() with option 3", function () {
     it("Should be able to mint item", async function () {
       let attendeeInfo = {
         email: "patcito+nonowner2@gmail.com",
@@ -379,7 +390,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
 
             specialStatus: "",
           },
@@ -388,56 +399,17 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
 
             specialStatus: "",
           },
         ],
-        { value: ethers.utils.parseEther("2.0").toHexString() }
+        { value: ethers.utils.parseEther("0.24").toHexString() }
       );
     });
-
-    describe("generateSVGofTokenById(uint256 id)", function () {
-      it("Should return svg of ticket id", async function () {
-        const generateSVG = async () => {
-          return await myContract.tokenURI(1);
-        };
-        const data = await generateSVG();
-        console.log(data);
-        //console.log(atob(data));
-        const json = Buffer.from(data.substring(29), "base64").toString();
-        console.log(json);
-        const obj = JSON.parse(json);
-        console.log(obj);
-        const svg = Buffer.from(obj.image.substring(26), "base64").toString();
-        fs.writeFileSync("/tmp/svg.svg", svg);
-
-        expect(svg).to.equal(svg);
-      });
-    });
   });
 
-  describe("generateSVGofTokenById(uint256 id) conference only badge", function () {
-    it("Should return svg of ticket id", async function () {
-      const generateSVG = async () => {
-        return await myContract.tokenURI(3);
-      };
-      const data = await generateSVG();
-      console.log(data);
-      //console.log(atob(data));
-      const json = Buffer.from(data.substring(29), "base64").toString();
-      console.log(json);
-      const obj = JSON.parse(json);
-      console.log(obj);
-      const svg = Buffer.from(obj.image.substring(26), "base64").toString();
-      console.log("working", svg);
-      fs.writeFileSync("/tmp/svg2.svg", svg);
-
-      expect(svg).to.equal(svg);
-    });
-  });
-
-  describe("mintItem() with 20 conference only", function () {
+  describe("mintItem() with 20 option 3", function () {
     it("Should be able to mint item", async function () {
       let attendeeInfo = {
         email: "patcito+nonowner2@gmail.com",
@@ -466,7 +438,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -474,7 +446,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -482,7 +454,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -490,7 +462,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -498,7 +470,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -506,7 +478,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -514,7 +486,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -522,7 +494,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -530,7 +502,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -538,7 +510,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -546,7 +518,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -554,7 +526,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -562,7 +534,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -570,7 +542,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -578,7 +550,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -586,7 +558,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -594,7 +566,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -602,7 +574,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -610,7 +582,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
           {
@@ -618,11 +590,11 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
         ],
-        { value: ethers.utils.parseEther("4.0").toHexString() }
+        { value: ethers.utils.parseEther("2.4").toHexString() }
       );
     });
   });
@@ -658,12 +630,12 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: 3,
 
               specialStatus: "speaker",
             },
           ],
-          { value: ethers.utils.parseEther("3.8").toHexString() }
+          { value: ethers.utils.parseEther(0.06).toHexString() }
         );
       };
     });
@@ -699,7 +671,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: 3,
 
               specialStatus: "Speaker",
             },
@@ -768,7 +740,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: 3,
 
               specialStatus: "speaker",
             },
@@ -857,129 +829,6 @@ describe("My Dapp", function () {
     });
   });
 
-  describe("setResellable() and resell() successfully called", function () {
-    it("Should not be able to setResellable", async function () {
-      const [owner, nonOwnerSeller, nonOwnerBuyer] = await ethers.getSigners();
-      console.log("nonOwnerSellerAddress", nonOwnerSeller.address);
-      const oo = await myContract.ownerOf(1);
-      console.log("owner of 1", oo);
-
-      const setResellable = async (o) => {
-        await myContract
-          .connect(o)
-          .setResellable(1, true, ethers.utils.parseEther("4").toHexString());
-      };
-      expect(setResellable(nonOwnerBuyer)).to.be.revertedWith("only owner");
-    });
-    it("Should  be able to setResellable", async function () {
-      const [owner, nonOwnerSeller, nonOwnerBuyer] = await ethers.getSigners();
-      console.log("nonOwnerSellerAddress", nonOwnerSeller.address);
-      const oo = await myContract.ownerOf(1);
-      console.log("owner of 1", oo);
-
-      const setResellable = async (o) => {
-        await myContract
-          .connect(o)
-          .setResellable(1, true, ethers.utils.parseEther("4").toHexString());
-      };
-
-      expect(setResellable(nonOwnerSeller)).to.not.be.revertedWith(
-        "only ticket owner can reset resell status"
-      );
-    });
-    it("Should not be able to resell()", async function () {
-      const [owner, nonOwnerSeller, nonOwnerBuyer] = await ethers.getSigners();
-      console.log("nonOwnerSellerAddress", nonOwnerSeller.address);
-      const oo = await myContract.ownerOf(1);
-      console.log("owner of 1", oo);
-
-      const resell = async (amount) =>
-        myContract.connect(nonOwnerBuyer).resell(
-          1,
-
-          { value: ethers.utils.parseEther(amount).toHexString() }
-        );
-      expect(resell("3.1")).to.be.revertedWith("price too low");
-    });
-
-    it("Should be able to resell()", async function () {
-      const [owner, nonOwnerSeller, nonOwnerBuyer] = await ethers.getSigners();
-      console.log("nonOwnerSellerAddress", nonOwnerSeller.address);
-      const oo = await myContract.ownerOf(1);
-      console.log("owner of 1", oo);
-
-      const resell = async (amount) =>
-        myContract.connect(nonOwnerBuyer).resell(
-          1,
-
-          { value: ethers.utils.parseEther(amount).toHexString() }
-        );
-      let ownerBalance = await myContract.provider.getBalance(owner.address);
-      let nonOwnerSellerBalance = await myContract.provider.getBalance(
-        nonOwnerSeller.address
-      );
-      let nonOwnerBuyerBalance = await myContract.provider.getBalance(
-        nonOwnerBuyer.address
-      );
-      let donateBalance = await myContract.provider.getBalance(
-        "0x579E8e014F5B2c6D7a3373fb840F8DaFeacBfae1"
-      );
-      let cb = await myContract.provider.getBalance(myContract.address);
-      expect(resell("4.0")).to.not.be.revertedWith("price too low");
-      let newcb = await myContract.provider.getBalance(myContract.address);
-      let newOwnerBalance = await myContract.provider.getBalance(owner.address);
-      let newNonOwnerSellerBalance = await myContract.provider.getBalance(
-        nonOwnerSeller.address
-      );
-      let newNonOwnerBuyerBalance = await myContract.provider.getBalance(
-        nonOwnerBuyer.address
-      );
-      let newDonateBalance = await myContract.provider.getBalance(
-        "0x579E8e014F5B2c6D7a3373fb840F8DaFeacBfae1"
-      );
-
-      console.log("owner balance,", ownerBalance.toString());
-      console.log("owner new balance,", newOwnerBalance.toString());
-      console.log("\n");
-      console.log(nonOwnerSellerBalance.toString(), "nonOwner Seller balance,");
-      console.log(
-        newNonOwnerSellerBalance.toString(),
-        "nonOwnerSeller new balance,"
-      );
-      console.log("\n");
-      console.log(nonOwnerBuyerBalance.toString(), "nonOwner Buyer balance,");
-      console.log(newNonOwnerBuyerBalance.toString(), "nonOwnerBuyer balance,");
-      console.log("\n");
-
-      console.log(donateBalance.toString(), "donate balance,");
-      console.log(newDonateBalance.toString(), "donate new balance,");
-      console.log("\n");
-      assert.isBelow(
-        newNonOwnerBuyerBalance.div(1000000000).toNumber(),
-        nonOwnerBuyerBalance.div(1000000000).toNumber(),
-        "buyer has less eth"
-      );
-      assert.isBelow(
-        newNonOwnerBuyerBalance.div(1000000000).toNumber(),
-        nonOwnerBuyerBalance.div(1000000000).toNumber(),
-        "seller has more eth"
-      );
-
-      console.log("cb", cb.toString());
-      console.log("newcb", newcb.toString());
-    });
-
-    it("Should update token owner", async function () {
-      const [owner, nonOwnerSeller, nonOwnerBuyer] = await ethers.getSigners();
-
-      const newOwner = await myContract.ownerOf(1);
-      expect(newOwner).to.equal(nonOwnerBuyer.address);
-      //   console.log("owner balance,", ownerBalance.toString());
-      // console.log("nonOwner Seller balance,", nonOwnerSellerBalance.toString());
-      // console.log("nonOwner Buyer balance,", nonOwnerBuyerBalance.toString());
-      //console.log("donate balance,", donateBalance.toString());
-    });
-  });
   /*
       let ownerBalance = await myContract.provider.getBalance(owner.address);
       let nonOwnerBalance = await myContract.provider.getBalance(
@@ -1013,7 +862,6 @@ describe("My Dapp", function () {
   describe("setDaos() and modify totalPrice() successfully", function () {
     it("Should set DAOs", async function () {
       const [owner, nonOwner, nonOwner3, nonOwner4] = await ethers.getSigners();
-      console.log(nonOwner4);
       const zero = "0x0000000000000000000000000000000000000000";
       let attendeeInfo = {
         email: "patcito@gmail.com",
@@ -1032,31 +880,7 @@ describe("My Dapp", function () {
         isResellable: true,
         price: ethers.BigNumber.from("50"),
       };
-
-      const oldPricenop = await myContract.connect(nonOwner4).totalPrice([
-        {
-          attendeeInfo,
-          ticketCode,
-          resellable,
-
-          ticketOption: "workshopAndPreParty",
-          specialStatus: "",
-        },
-      ]);
-      const setDaos = async () => {
-        await myContract.setDaos(myContract.address, zero, zero, 5);
-      };
-      await setDaos();
-      const newPricenopset = await myContract.connect(nonOwner4).totalPrice([
-        {
-          attendeeInfo,
-          ticketCode,
-          resellable,
-
-          ticketOption: "workshopAndPreParty",
-          specialStatus: "",
-        },
-      ]);
+      console.log("totalPrice");
       await myContract.connect(nonOwner4).mintItem(
         [
           {
@@ -1064,20 +888,51 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
         ],
-        { value: ethers.utils.parseEther("0.2").toHexString() }
-      );
 
+        { value: ethers.utils.parseEther("10.12").toHexString() }
+      );
+      const oldPricenop = await myContract.connect(nonOwner4).totalPrice([
+        {
+          attendeeInfo,
+          ticketCode,
+          resellable,
+
+          ticketOption: 3,
+          specialStatus: "",
+        },
+      ]);
+      console.log("setDao");
+
+      const setDao = async () => {
+        await myContract.setDao(erc20.address, 5, 90, 0, 0);
+      };
+      await erc20.approve(nonOwner4.address, 5000000000);
+      await erc20.transfer(nonOwner4.address, 50);
+
+      const newPricenopset = await myContract
+        .connect(nonOwner4)
+        .totalPrice([{ ticketCode: "_", ticketOption: 3, specialStatus: "" }]);
+      await setDao([
+        {
+          attendeeInfo,
+          ticketCode,
+          resellable,
+
+          ticketOption: 3,
+          specialStatus: "",
+        },
+      ]);
       const newPriceyespset = await myContract.connect(nonOwner4).totalPrice([
         {
           attendeeInfo,
           ticketCode,
           resellable,
 
-          ticketOption: "workshopAndPreParty",
+          ticketOption: 3,
           specialStatus: "",
         },
       ]);
@@ -1093,7 +948,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: 3,
             specialStatus: "",
           },
         ],
