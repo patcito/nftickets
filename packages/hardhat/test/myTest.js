@@ -9,13 +9,16 @@ function sleep(ms) {
 }
 describe("My Dapp", function () {
   let myContract;
+  let erc20;
 
   describe("ETHDubaiTicket", function () {
     it("Should deploy ETHDubaiTicket", async function () {
       const [owner] = await ethers.getSigners();
       const ETHDubaiTicket = await ethers.getContractFactory("ETHDubaiTicket");
+      const Unlimited = await ethers.getContractFactory("Unlimited");
 
       myContract = await ETHDubaiTicket.deploy();
+      erc20 = await Unlimited.deploy();
     });
   });
 
@@ -25,7 +28,7 @@ describe("My Dapp", function () {
       //expect(await myContract.purpose()).to.equal(newPurpose);
       //        expect(true).to.equal(true);
       let ticketSettings = settings.ticketSettings;
-      expect(ticketSettings.name).to.equal("early bird");
+      expect(ticketSettings.name).to.equal("early");
     });
   });
 
@@ -40,33 +43,33 @@ describe("My Dapp", function () {
 
   describe("getPrice() 3 days with hotel", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "hotelWorkshopsAndPreParty";
+      let ticketOption = "hotelWorkshops1AndPreParty";
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
         return await myContract
           .connect(nonOwner)
-          .getPrice(nonOwner.address, ticketOption);
+          .getPriceView(nonOwner.address, ticketOption);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.4").toString()
+        ethers.utils.parseEther("0.32").toString()
       );
     });
   });
 
   describe("getPrice() 3 days without Hotel", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "workshopAndPreParty";
+      let ticketOption = "workshop1AndPreParty";
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
         return await myContract
           .connect(nonOwner)
-          .getPrice(nonOwner.address, ticketOption);
+          .getPriceView(nonOwner.address, ticketOption);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.2").toString()
+        ethers.utils.parseEther("0.12").toString()
       );
     });
   });
@@ -77,7 +80,7 @@ describe("My Dapp", function () {
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPrice(
+        return await myContract.connect(nonOwner).getPriceView(
           nonOwner.address,
 
           ticketOption
@@ -85,7 +88,7 @@ describe("My Dapp", function () {
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.1").toString()
+        ethers.utils.parseEther("0.07").toString()
       );
     });
   });
@@ -95,7 +98,7 @@ describe("My Dapp", function () {
       let ticketOption = "hotelConference";
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPrice(
+        return await myContract.connect(nonOwner).getPriceView(
           nonOwner.address,
 
           ticketOption
@@ -103,7 +106,7 @@ describe("My Dapp", function () {
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.2").toString()
+        ethers.utils.parseEther("0.17").toString()
       );
     });
   });
@@ -168,11 +171,11 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
         ],
-        { value: ethers.utils.parseEther("3.8").toHexString() }
+        { value: ethers.utils.parseEther("0.12").toHexString() }
       );
     });
   });
@@ -196,7 +199,10 @@ describe("My Dapp", function () {
         isResellable: true,
         price: ethers.BigNumber.from("50"),
       };
-
+      const setMaxMint = async () => {
+        await myContract.setMaxMint(1);
+      };
+      await setMaxMint();
       const [owner, nonOwner] = await ethers.getSigners();
       const nonOwnerAddress = nonOwner.address;
       const mintAgain = async () => {
@@ -207,7 +213,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: "workshop1AndPreParty",
 
               specialStatus: "",
             },
@@ -252,7 +258,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: "workshop1AndPreParty",
 
               specialStatus: "",
             },
@@ -275,7 +281,7 @@ describe("My Dapp", function () {
       const setDiscount = async () => {
         await myContract.setDiscount(
           nonOwner.address,
-          ["workshopAndPreParty"],
+          ["workshop1AndPreParty"],
           amount
         );
       };
@@ -289,7 +295,7 @@ describe("My Dapp", function () {
 
         await myContract
           .connect(nonOwner)
-          .setDiscount(nonOwner.address, ["workshopAndPreParty"], amount);
+          .setDiscount(nonOwner.address, ["workshop1AndPreParty"], amount);
       };
       expect(nonOwnerSetDiscount()).to.be.revertedWith("only owner");
     });
@@ -321,7 +327,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
 
             specialStatus: "",
           },
@@ -333,11 +339,11 @@ describe("My Dapp", function () {
 
   describe("getPrice() with discount", function () {
     it("Should return price with with discount", async function () {
-      let ticketOption = "workshopAndPreParty";
+      let ticketOption = "workshop1AndPreParty";
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPrice(
+        return await myContract.connect(nonOwner).getPriceView(
           nonOwner.address,
 
           ticketOption
@@ -345,7 +351,7 @@ describe("My Dapp", function () {
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.1").toString()
+        ethers.utils.parseEther("0.06").toString()
       );
     });
   });
@@ -379,7 +385,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
 
             specialStatus: "",
           },
@@ -388,7 +394,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
 
             specialStatus: "",
           },
@@ -466,7 +472,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -474,7 +480,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -482,7 +488,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -490,7 +496,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -498,7 +504,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -506,7 +512,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -514,7 +520,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -522,7 +528,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -530,7 +536,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -538,7 +544,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -546,7 +552,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -554,7 +560,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -562,7 +568,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -570,7 +576,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -578,7 +584,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -586,7 +592,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -594,7 +600,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -602,7 +608,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -610,7 +616,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
           {
@@ -618,7 +624,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
         ],
@@ -658,7 +664,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: "workshop1AndPreParty",
 
               specialStatus: "speaker",
             },
@@ -699,7 +705,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: "workshop1AndPreParty",
 
               specialStatus: "Speaker",
             },
@@ -768,7 +774,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: "workshop1AndPreParty",
 
               specialStatus: "speaker",
             },
@@ -845,7 +851,7 @@ describe("My Dapp", function () {
               ticketCode,
               resellable,
 
-              ticketOption: "workshopAndPreParty",
+              ticketOption: "workshop1AndPreParty",
 
               specialStatus: "speaker",
             },
@@ -1039,12 +1045,12 @@ describe("My Dapp", function () {
           ticketCode,
           resellable,
 
-          ticketOption: "workshopAndPreParty",
+          ticketOption: "workshop1AndPreParty",
           specialStatus: "",
         },
       ]);
       const setDaos = async () => {
-        await myContract.setDaos(myContract.address, zero, zero, 5);
+        await myContract.setDao(myContract.address, 10, 90, 0, 0);
       };
       await setDaos();
       const newPricenopset = await myContract.connect(nonOwner4).totalPrice([
@@ -1053,7 +1059,7 @@ describe("My Dapp", function () {
           ticketCode,
           resellable,
 
-          ticketOption: "workshopAndPreParty",
+          ticketOption: "workshop1AndPreParty",
           specialStatus: "",
         },
       ]);
@@ -1064,7 +1070,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
         ],
@@ -1077,7 +1083,7 @@ describe("My Dapp", function () {
           ticketCode,
           resellable,
 
-          ticketOption: "workshopAndPreParty",
+          ticketOption: "workshop1AndPreParty",
           specialStatus: "",
         },
       ]);
@@ -1093,7 +1099,7 @@ describe("My Dapp", function () {
             ticketCode,
             resellable,
 
-            ticketOption: "workshopAndPreParty",
+            ticketOption: "workshop1AndPreParty",
             specialStatus: "",
           },
         ],
