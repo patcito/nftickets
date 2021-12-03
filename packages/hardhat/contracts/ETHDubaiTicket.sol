@@ -45,13 +45,13 @@ contract ETHDubaiTicket is ERC721 {
     event LMint(MintLog indexed mintLog, string message);
     event LResell(ResellLog indexed resellLog, string message);
 
-    //constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
-    constructor() ERC721("TESTETHDB", "EDB") {
+    constructor() ERC721("ETHDubaiTicket", "ETHDUBAI") {
+        //constructor() ERC721("TESTETHDB", "EDB") {
         emit Log(msg.sender, "created");
         owner = payable(msg.sender);
         settings.maxMint = 50;
 
-        erc20 = ERC20(0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512);
+        erc20 = ERC20(0xeA84735F0b44e2d3D3B42595F14A120C4398FEfc);
 
         settings.ticketSettings = TicketSettings("early");
 

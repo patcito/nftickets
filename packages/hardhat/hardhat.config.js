@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "localhost";
+const defaultNetwork = "rinkebyArbitrum";
 
 const mainnetGwei = 21;
 
