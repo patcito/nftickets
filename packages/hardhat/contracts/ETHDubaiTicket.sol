@@ -43,6 +43,7 @@ contract ETHDubaiTicket {
         TicketSettings indexed ticketSettings,
         string message
     );
+    uint256[] private initDiscounts;
 
     constructor() {
         emit Log(msg.sender, "created");
@@ -52,10 +53,10 @@ contract ETHDubaiTicket {
         settings.ticketSettings = TicketSettings("early");
 
         ticketOptions[uint256(Ticket.CONFERENCE)] = 0.07 ether;
+        ticketOptions[uint256(Ticket.HOTEL_CONFERENCE)] = 0.17 ether;
         ticketOptions[uint256(Ticket.WORKSHOP1_AND_PRE_PARTY)] = 0.12 ether;
         ticketOptions[uint256(Ticket.WORKSHOP2_AND_PRE_PARTY)] = 0.12 ether;
         ticketOptions[uint256(Ticket.WORKSHOP3_AND_PRE_PARTY)] = 0.12 ether;
-        ticketOptions[uint256(Ticket.HOTEL_CONFERENCE)] = 0.17 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP1_AND_PRE_PARTY)
         ] = 0.32 ether;
@@ -65,6 +66,97 @@ contract ETHDubaiTicket {
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP3_AND_PRE_PARTY)
         ] = 0.32 ether;
+        initDiscounts = [0, 2, 3, 4];
+        setDiscount(
+            0x114f2661D4eE895AE65cbbD302B7EdB32c5667e3,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0xe32bAC6E393199bb3881187F4feb52e28e973870,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x3955Fc91B098db549947c3c646Cf1223aE4E08b5,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x402A5F0e42B0134aBeC851b2656F31F7ee7A0ee4,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x4C8418E3f8c1390dBc72314b642d5255FDa14dd8,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x8588Be209727C471d31d77B844ED411BA068f73B,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0xc840D0A9bb73e1C76915c013804B7b6Cb67462ec,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0xF1E1F290A7167132725FAA917b119e16F2BC5fA3,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x434Aa19BE9925388B114C8c814F74E93761Ed682,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x43b30c00AA87967eB665Ed8d5558e06f55611344,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x1A0d4d5b4F7F51e71A88Bf2b70177836ac893225,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x6B703a7FD20efe6F5BADfdd57cc8Ec97FA3A1910,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x524aD4d7da566383d993073193f81bB596aC6639,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0xC8F78497C72A2940Ca5bC1795c79d48d42B246A4,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x1fa4aA8476D547f83EcC7f817CBA662f1F58F807,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x98cdbFee2C5b945be3AdCA4A1815622c64E07D7e,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0x858989924f72DdeB80526a68EfB15677E8Cfad64,
+            initDiscounts,
+            15
+        );
+        setDiscount(
+            0xc3F4DC5D0c288f2b83b63c44A810baBCe6d69dA4,
+            initDiscounts,
+            15
+        );
     }
 
     struct Discount {

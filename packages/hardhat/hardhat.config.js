@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "localhost";
+const defaultNetwork = "mainnet";
 
 const mainnetGwei = 21;
 
@@ -76,7 +76,7 @@ module.exports = {
     //   accounts: [`${process.env.KOVAN_DEPLOYER_PRIV_KEY}`],
     // },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.MAINNET_INFURA_KEY}`,
+      url: `https://mainnet.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`,
       accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
     },
     ropsten: {
