@@ -9,20 +9,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   console.log("deployer", deployer);
 
   console.log("\n\n 📡 Deploying...\n");
+  /*
 
   await deploy("ETHDubaiTicket", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     log: true,
   });
-  /*
-
+*/
   await deploy("Unlimited", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     log: true,
   });
 
+  /*
     // Getting a previously deployed contract
     const YourContract = await ethers.getContract("YourContract", deployer);
     await YourContract.setPurpose("Hello");
