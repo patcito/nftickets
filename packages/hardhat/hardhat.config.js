@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "localhost";
+const defaultNetwork = "lo";
 
 const mainnetGwei = 21;
 
@@ -54,7 +54,7 @@ module.exports = {
   // Follow the directions, and uncomment the network you wish to deploy to.
 
   networks: {
-    localhost: {
+    lo: {
       url: "http://localhost:8545",
       /*
         notice no mnemonic here? it will just use account 0 of the hardhat node to deploy
@@ -113,7 +113,7 @@ module.exports = {
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
     ra: {
-      url: "https://arbitrum-rinkeby.infura.io/v3/753e543666274e8f9ab27ff3a082c75c",
+      url: "https://rinkeby.arbitrum.io/rpc",
       gasPrice: 1000000000,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
       companionNetworks: {
