@@ -16,9 +16,12 @@ describe("My Dapp", function () {
       const [owner] = await ethers.getSigners();
       const ETHDubaiTicket = await ethers.getContractFactory("ETHDubaiTicket");
       const Unlimited = await ethers.getContractFactory("Unlimited");
+      const RenderSVG = await ethers.getContractFactory("RenderSVG");
 
       myContract = await ETHDubaiTicket.deploy();
       erc20 = await Unlimited.deploy();
+      rendersvg = await RenderSVG.deploy();
+      await myContract.setRsca(rendersvg.address);
     });
   });
 
@@ -48,11 +51,11 @@ describe("My Dapp", function () {
       const getTotal = async () => {
         return await myContract
           .connect(nonOwner)
-          .getPriceView(nonOwner.address, ticketOption);
+          .getPriceView(nonOwner.address, ticketOption, 1);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
-        ethers.utils.parseEther("0.32").toString()
+        ethers.utils.parseEther("0.4").toString()
       );
     });
   });
@@ -65,7 +68,7 @@ describe("My Dapp", function () {
       const getTotal = async () => {
         return await myContract
           .connect(nonOwner)
-          .getPriceView(nonOwner.address, ticketOption);
+          .getPriceView(nonOwner.address, ticketOption, 1);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
@@ -80,11 +83,9 @@ describe("My Dapp", function () {
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPriceView(
-          nonOwner.address,
-
-          ticketOption
-        );
+        return await myContract
+          .connect(nonOwner)
+          .getPriceView(nonOwner.address, ticketOption, 1);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
@@ -98,11 +99,9 @@ describe("My Dapp", function () {
       let ticketOption = "hotelConference";
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPriceView(
-          nonOwner.address,
-
-          ticketOption
-        );
+        return await myContract
+          .connect(nonOwner)
+          .getPriceView(nonOwner.address, ticketOption, 1);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
@@ -282,7 +281,8 @@ describe("My Dapp", function () {
         await myContract.setDiscount(
           nonOwner.address,
           ["workshop1AndPreParty"],
-          amount
+          amount,
+          100
         );
       };
       expect(setDiscount()).to.not.be.revertedWith("only owner");
@@ -295,7 +295,7 @@ describe("My Dapp", function () {
 
         await myContract
           .connect(nonOwner)
-          .setDiscount(nonOwner.address, ["workshop1AndPreParty"], amount);
+          .setDiscount(nonOwner.address, ["workshop1AndPreParty"], amount, 100);
       };
       expect(nonOwnerSetDiscount()).to.be.revertedWith("only owner");
     });
@@ -343,11 +343,9 @@ describe("My Dapp", function () {
 
       const [owner, nonOwner] = await ethers.getSigners();
       const getTotal = async () => {
-        return await myContract.connect(nonOwner).getPriceView(
-          nonOwner.address,
-
-          ticketOption
-        );
+        return await myContract
+          .connect(nonOwner)
+          .getPriceView(nonOwner.address, ticketOption, 1);
       };
       const total = await getTotal();
       expect(total.toString()).to.equal(
@@ -1050,7 +1048,14 @@ describe("My Dapp", function () {
         },
       ]);
       const setDaos = async () => {
-        await myContract.setDao(myContract.address, 10, 90, 0, 0);
+        await myContract.setDao(
+          myContract.address,
+          10,
+          90,
+          0,
+          0,
+          ethers.utils.parseEther("5").toHexString()
+        );
       };
       await setDaos();
       const newPricenopset = await myContract.connect(nonOwner4).totalPrice([
