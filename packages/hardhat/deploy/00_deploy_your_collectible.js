@@ -15,7 +15,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
   });
-  await deploy("Unlimited", {
+  /* await deploy("Unlimited", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     log: true,
@@ -25,12 +25,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
   });
-  await deploy("ConvertBase64", {
+  /*await deploy("ConvertBase64", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     log: true,
   });
-  /*
     // Getting a previously deployed contract
     const YourContract = await ethers.getContract("YourContract", deployer);
     await YourContract.setPurpose("Hello");

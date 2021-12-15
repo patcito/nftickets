@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 //const defaultNetwork = "rinkebyArbitrum";
-const defaultNetwork = "ra";
+const defaultNetwork = "arb1";
 
 const mainnetGwei = 21;
 
@@ -119,6 +119,10 @@ module.exports = {
       companionNetworks: {
         l1: "rinkeby",
       },
+    },
+    arb1: {
+      url: "https://arb1.arbitrum.io/rpc",
+      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
     localArbitrum: {
       url: "http://localhost:8547",
