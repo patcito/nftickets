@@ -15,7 +15,7 @@ contract ETHDubaiTicket {
     Counters.Counter private _tokenIds;
     address payable public owner;
 
-    uint256[20] public ticketOptions;
+    uint256[90] public ticketOptions;
     Settings public settings;
     event Log(address indexed sender, string message);
     event Lint(uint256 indexed tokenId, string message);
@@ -27,9 +27,47 @@ contract ETHDubaiTicket {
         WORKSHOP1_AND_PRE_PARTY,
         WORKSHOP2_AND_PRE_PARTY,
         WORKSHOP3_AND_PRE_PARTY,
+        HOTEL_WORKSHOP_AND_PRE_PARTY,
         HOTEL_WORKSHOP1_AND_PRE_PARTY,
         HOTEL_WORKSHOP2_AND_PRE_PARTY,
-        HOTEL_WORKSHOP3_AND_PRE_PARTY
+        HOTEL_WORKSHOP3_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP1_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP2_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP3_AND_PRE_PARTY,
+        HOTEL2_CONFERENCE,
+        WORKSHOP4_AND_PRE_PARTY,
+        HOTEL_WORKSHOP4_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP4_AND_PRE_PARTY,
+        HACKATHON_AND_CONFERENCE_ONLY,
+        HOTEL_HACKATHON_AND_CONFERENCE_ONLY,
+        HOTEL2_HACKATHON_AND_CONFERENCE_ONLY,
+        HACKATHON_AND_PRE_PARTY,
+        HOTEL_HACKATHON_AND_PRE_PARTY,
+        HOTEL2_HACKATHON_AND_PRE_PARTY,
+        WORKSHOP5_AND_PRE_PARTY,
+        HOTEL_WORKSHOP5_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP5_AND_PRE_PARTY,
+        WORKSHOP6_AND_PRE_PARTY,
+        HOTEL_WORKSHOP6_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP6_AND_PRE_PARTY,
+        WORKSHOP7_AND_PRE_PARTY,
+        HOTEL_WORKSHOP7_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP7_AND_PRE_PARTY,
+        WORKSHOP8_AND_PRE_PARTY,
+        HOTEL_WORKSHOP8_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP8_AND_PRE_PARTY,
+        WORKSHOP9_AND_PRE_PARTY,
+        HOTEL_WORKSHOP9_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP9_AND_PRE_PARTY,
+        WORKSHOP10_AND_PRE_PARTY,
+        HOTEL_WORKSHOP10_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP10_AND_PRE_PARTY,
+        WORKSHOP11_AND_PRE_PARTY,
+        HOTEL_WORKSHOP11_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP11_AND_PRE_PARTY,
+        WORKSHOP12_AND_PRE_PARTY,
+        HOTEL_WORKSHOP12_AND_PRE_PARTY,
+        HOTEL2_WORKSHOP12_AND_PRE_PARTY
     }
     EnumerableSet.AddressSet private daosAddresses;
     mapping(address => uint256) public daosQty;
@@ -43,12 +81,11 @@ contract ETHDubaiTicket {
         TicketSettings indexed ticketSettings,
         string message
     );
-    uint256[] private initDiscounts;
 
     constructor() {
         emit Log(msg.sender, "created");
         owner = payable(msg.sender);
-        settings.maxMint = 50;
+        settings.maxMint = 700;
 
         settings.ticketSettings = TicketSettings("early");
 
@@ -57,106 +94,105 @@ contract ETHDubaiTicket {
         ticketOptions[uint256(Ticket.WORKSHOP1_AND_PRE_PARTY)] = 0.12 ether;
         ticketOptions[uint256(Ticket.WORKSHOP2_AND_PRE_PARTY)] = 0.12 ether;
         ticketOptions[uint256(Ticket.WORKSHOP3_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[uint256(Ticket.HOTEL_WORKSHOP_AND_PRE_PARTY)] = 0.4 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP1_AND_PRE_PARTY)
-        ] = 0.32 ether;
+        ] = 0.4 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP2_AND_PRE_PARTY)
-        ] = 0.32 ether;
+        ] = 0.4 ether;
         ticketOptions[
             uint256(Ticket.HOTEL_WORKSHOP3_AND_PRE_PARTY)
-        ] = 0.32 ether;
-        initDiscounts = [0, 2, 3, 4];
-        setDiscount(
-            0x114f2661D4eE895AE65cbbD302B7EdB32c5667e3,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0xe32bAC6E393199bb3881187F4feb52e28e973870,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x3955Fc91B098db549947c3c646Cf1223aE4E08b5,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x402A5F0e42B0134aBeC851b2656F31F7ee7A0ee4,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x4C8418E3f8c1390dBc72314b642d5255FDa14dd8,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x8588Be209727C471d31d77B844ED411BA068f73B,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0xc840D0A9bb73e1C76915c013804B7b6Cb67462ec,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0xF1E1F290A7167132725FAA917b119e16F2BC5fA3,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x434Aa19BE9925388B114C8c814F74E93761Ed682,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x43b30c00AA87967eB665Ed8d5558e06f55611344,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x1A0d4d5b4F7F51e71A88Bf2b70177836ac893225,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x6B703a7FD20efe6F5BADfdd57cc8Ec97FA3A1910,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x524aD4d7da566383d993073193f81bB596aC6639,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0xC8F78497C72A2940Ca5bC1795c79d48d42B246A4,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x1fa4aA8476D547f83EcC7f817CBA662f1F58F807,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x98cdbFee2C5b945be3AdCA4A1815622c64E07D7e,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0x858989924f72DdeB80526a68EfB15677E8Cfad64,
-            initDiscounts,
-            15
-        );
-        setDiscount(
-            0xc3F4DC5D0c288f2b83b63c44A810baBCe6d69dA4,
-            initDiscounts,
-            15
-        );
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP1_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP2_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP3_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.HOTEL2_CONFERENCE)] = 0.3 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP4_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP4_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP4_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[
+            uint256(Ticket.HACKATHON_AND_CONFERENCE_ONLY)
+        ] = 0.10 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_HACKATHON_AND_CONFERENCE_ONLY)
+        ] = 0.3 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_HACKATHON_AND_CONFERENCE_ONLY)
+        ] = 0.4 ether;
+        ticketOptions[uint256(Ticket.HACKATHON_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_HACKATHON_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_HACKATHON_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP5_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP5_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP5_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP6_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP6_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP6_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP7_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP7_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP7_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP8_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP8_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP8_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP9_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP9_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP9_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP10_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP10_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP10_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP11_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP11_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP11_AND_PRE_PARTY)
+        ] = 0.5 ether;
+        ticketOptions[uint256(Ticket.WORKSHOP12_AND_PRE_PARTY)] = 0.12 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL_WORKSHOP12_AND_PRE_PARTY)
+        ] = 0.4 ether;
+        ticketOptions[
+            uint256(Ticket.HOTEL2_WORKSHOP12_AND_PRE_PARTY)
+        ] = 0.5 ether;
     }
 
     struct Discount {
